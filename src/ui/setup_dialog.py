@@ -36,7 +36,7 @@ class SetupDialog(QDialog):
         
     def setup_ui(self):
         """Setup the user interface."""
-        self.setWindowTitle("Automation Studio Selector - Initial Setup")
+        self.setWindowTitle("Setup Automation Studio Paths and Project Root")
         self.setModal(True)
         self.resize(600, 500)
         
@@ -46,13 +46,13 @@ class SetupDialog(QDialog):
         layout = QVBoxLayout(self)
         
         # Title
-        title = QLabel("Setup Automation Studio Installations")
+        title = QLabel("Setup Automation Studio Paths")
         title.setObjectName("title")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
         
         # Subtitle
-        subtitle = QLabel("Configure the paths to your Automation Studio executable files")
+        subtitle = QLabel("Configure automation studio executable paths and working project root directory")
         subtitle.setObjectName("subtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(subtitle)

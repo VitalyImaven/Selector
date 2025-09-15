@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
         # File menu
         file_menu = menubar.addMenu("File")
         
-        setup_action = QAction("Setup Studios...", self)
+        setup_action = QAction("Setup Automation Studio Paths...", self)
         setup_action.triggered.connect(self.show_setup_dialog)
         file_menu.addAction(setup_action)
         
