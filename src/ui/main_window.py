@@ -124,15 +124,30 @@ class MainWindow(QMainWindow):
         # Logo (image-based)
         logo = QLabel()
         try:
-            pixmap = QPixmap("assets/logo.png")
+            # Get the correct path for the logo (works in both development and packaged app)
+            import sys
+            import os
+            
+            if getattr(sys, 'frozen', False):
+                # Running in PyInstaller bundle
+                base_path = sys._MEIPASS
+            else:
+                # Running in development
+                base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            
+            logo_path = os.path.join(base_path, 'assets', 'logo.png')
+            
+            pixmap = QPixmap(logo_path)
             if not pixmap.isNull():
                 # Scale the logo to appropriate size
                 scaled_pixmap = pixmap.scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 logo.setPixmap(scaled_pixmap)
+                logger.info(f"Logo loaded successfully from: {logo_path}")
             else:
                 # Fallback to text if image fails to load
                 logo.setText("🏭")
                 logo.setStyleSheet("font-size: 48px; color: #3498db;")
+                logger.warning(f"Logo image not found or invalid: {logo_path}")
         except Exception as e:
             # Fallback to text if image fails to load
             logo.setText("🏭")
