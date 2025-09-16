@@ -85,7 +85,7 @@ QListWidget {
     border-radius: 8px;
     padding: 8px;
     font-size: 14px;
-    selection-background-color: #3498db;
+    selection-background-color: #16a085;
     selection-color: white;
     outline: none;
 }
@@ -98,11 +98,11 @@ QListWidget::item {
 }
 
 QListWidget::item:hover {
-    background-color: #ecf0f1;
+    background-color: #f0f8ff;
 }
 
 QListWidget::item:selected {
-    background-color: #3498db;
+    background-color: #16a085;
     color: white;
 }
 

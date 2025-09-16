@@ -11,14 +11,16 @@ from PyQt6.QtWidgets import (
     QSizePolicy
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QAction, QFont, QIcon
+from PyQt6.QtGui import QAction, QFont, QIcon, QPixmap
 
 from src.models.automation_studio import AutomationStudio
 from src.config.settings import ConfigManager
 from src.services.project_service import ProjectService, ProjectOperationError
+from src.services.auto_sync_manager import AutoSyncManager
 from src.utils.logger import SessionLogger
 from src.ui.styles import MAIN_STYLE
 from src.ui.setup_dialog import SetupDialog
+from src.ui.sync_settings_dialog import SyncSettingsDialog
 
 
 logger = logging.getLogger(__name__)
@@ -79,6 +81,7 @@ class MainWindow(QMainWindow):
         self.config_manager = ConfigManager()
         self.session_logger = SessionLogger()
         self.project_service = ProjectService(self.session_logger)
+        self.auto_sync_manager = AutoSyncManager(self.session_logger)
         
         # UI components
         self.project_path_edit: Optional[QLineEdit] = None
@@ -96,12 +99,13 @@ class MainWindow(QMainWindow):
         
         self.setup_ui()
         self.load_configuration()
+        self.setup_auto_sync()
         
     def setup_ui(self):
         """Setup the user interface."""
         self.setWindowTitle("Automation Studio Selector")
-        self.setMinimumSize(800, 700)
-        self.resize(900, 800)
+        self.setMinimumSize(650, 650)
+        self.resize(700, 900)
         
         # Apply styles
         self.setStyleSheet(MAIN_STYLE)
@@ -114,11 +118,45 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
         
+        # Logo and Title section
+        logo_title_layout = QHBoxLayout()
+        
+        # Logo (image-based)
+        logo = QLabel()
+        try:
+            pixmap = QPixmap("assets/logo.png")
+            if not pixmap.isNull():
+                # Scale the logo to appropriate size
+                scaled_pixmap = pixmap.scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                logo.setPixmap(scaled_pixmap)
+            else:
+                # Fallback to text if image fails to load
+                logo.setText("🏭")
+                logo.setStyleSheet("font-size: 48px; color: #3498db;")
+        except Exception as e:
+            # Fallback to text if image fails to load
+            logo.setText("🏭")
+            logo.setStyleSheet("font-size: 48px; color: #3498db;")
+            logger.warning(f"Failed to load logo image: {e}")
+        
+        logo.setStyleSheet("""
+            QLabel {
+                padding: 10px;
+                margin-right: 15px;
+            }
+        """)
+        logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logo_title_layout.addWidget(logo)
+        
         # Title
         title = QLabel("Automation Studio Selector")
         title.setObjectName("title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        logo_title_layout.addWidget(title)
+        logo_title_layout.addStretch()
+        
+        # Add the logo and title layout to main layout
+        layout.addLayout(logo_title_layout)
         
         # Project root selection group
         self.setup_project_root_group(layout)
@@ -152,9 +190,30 @@ class MainWindow(QMainWindow):
         
         file_menu.addSeparator()
         
+        # Manual sync action
+        sync_now_action = QAction("Manual Sync Now", self)
+        sync_now_action.triggered.connect(self.perform_manual_sync)
+        file_menu.addAction(sync_now_action)
+        
+        file_menu.addSeparator()
+        
         exit_action = QAction("Exit", self)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
+        
+        # Settings menu
+        settings_menu = menubar.addMenu("Settings")
+        
+        # Sync submenu
+        sync_menu = settings_menu.addMenu("Sync")
+        
+        sync_settings_action = QAction("Auto-Sync Settings...", self)
+        sync_settings_action.triggered.connect(self.show_sync_settings)
+        sync_menu.addAction(sync_settings_action)
+        
+        sync_status_action = QAction("View Sync Status", self)
+        sync_status_action.triggered.connect(self.show_sync_status)
+        sync_menu.addAction(sync_status_action)
         
         # Help menu
         help_menu = menubar.addMenu("Help")
@@ -205,7 +264,8 @@ class MainWindow(QMainWindow):
         
         # Studio list with proper sizing
         self.studio_list = QListWidget()
-        self.studio_list.setMinimumHeight(200)
+        self.studio_list.setMinimumHeight(140)
+        self.studio_list.setMaximumHeight(180)
         self.studio_list.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding
@@ -214,13 +274,17 @@ class MainWindow(QMainWindow):
         self.studio_list.itemDoubleClicked.connect(self.open_selected_project)
         layout.addWidget(self.studio_list)
         
-        # Button layout with fixed positioning
+        # Add spacing between list and buttons
+        layout.addSpacing(15)
+        
+        # Button layout with proper separation
         button_layout = QHBoxLayout()
-        button_layout.setContentsMargins(0, 10, 0, 0)  # Add top margin
+        button_layout.setContentsMargins(10, 0, 10, 10)  # Add margins all around
         
         self.refresh_btn = QPushButton("Refresh List")
         self.refresh_btn.clicked.connect(self.refresh_studio_list)
-        self.refresh_btn.setFixedHeight(35)  # Fixed height
+        self.refresh_btn.setFixedHeight(40)  # Slightly larger buttons
+        self.refresh_btn.setMinimumWidth(120)
         button_layout.addWidget(self.refresh_btn)
         
         button_layout.addStretch()
@@ -229,7 +293,8 @@ class MainWindow(QMainWindow):
         self.select_button.setObjectName("primary")
         self.select_button.clicked.connect(self.open_selected_project)
         self.select_button.setEnabled(False)
-        self.select_button.setFixedHeight(35)  # Fixed height
+        self.select_button.setFixedHeight(40)  # Slightly larger buttons
+        self.select_button.setMinimumWidth(140)
         button_layout.addWidget(self.select_button)
         
         layout.addLayout(button_layout)
@@ -252,8 +317,8 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(group)
         
         self.log_display = QTextEdit()
-        self.log_display.setMaximumHeight(200)
-        self.log_display.setMinimumHeight(180)
+        self.log_display.setMaximumHeight(180)
+        self.log_display.setMinimumHeight(140)
         self.log_display.setReadOnly(True)
         layout.addWidget(self.log_display)
         
@@ -293,6 +358,27 @@ class MainWindow(QMainWindow):
             logger.error(f"Error loading configuration: {e}")
             self.log_message(f"Error loading configuration: {e}")
             QTimer.singleShot(100, self.show_setup_dialog)
+    
+    def setup_auto_sync(self):
+        """Setup auto-sync system."""
+        try:
+            # Set project root for auto-sync
+            if self.project_root:
+                self.auto_sync_manager.set_project_root(self.project_root)
+            
+            # Register all automation studios for process monitoring
+            for studio in self.available_studios:
+                self.auto_sync_manager.register_automation_studio(studio)
+            
+            # Connect signals
+            self.auto_sync_manager.sync_completed.connect(self.on_sync_completed)
+            self.auto_sync_manager.sync_error.connect(self.on_sync_error)
+            
+            self.log_message("Auto-sync system initialized")
+            
+        except Exception as e:
+            logger.error(f"Error setting up auto-sync: {e}")
+            self.log_message(f"Error setting up auto-sync: {e}")
     
     def show_setup_dialog(self):
         """Show the setup dialog."""
@@ -463,6 +549,9 @@ class MainWindow(QMainWindow):
             # Save last selected studio
             self.config_manager.set_last_selected_studio(studio.version.value)
             
+            # Start auto-sync session
+            self.auto_sync_manager.start_session(studio)
+            
             # Start worker thread
             self.worker_thread = ProjectWorker(self.project_service, self.project_root, studio)
             self.worker_thread.progress_updated.connect(self.on_progress_updated)
@@ -537,6 +626,113 @@ class MainWindow(QMainWindow):
         self.log_display.clear()
         self.log_message("Log cleared")
     
+    def on_sync_completed(self, files_synced: int):
+        """Handle auto-sync completion."""
+        if files_synced > 0:
+            self.log_message(f"✓ Auto-sync completed: {files_synced} files synchronized")
+            self.status_bar.showMessage(f"Auto-sync: {files_synced} files synchronized", 3000)
+    
+    def on_sync_error(self, error_message: str):
+        """Handle auto-sync error."""
+        self.log_message(f"✗ Auto-sync error: {error_message}")
+        self.status_bar.showMessage(f"Auto-sync error: {error_message}", 5000)
+    
+    def perform_manual_sync(self):
+        """Perform manual synchronization."""
+        try:
+            files_synced = self.auto_sync_manager.perform_manual_sync()
+            if files_synced > 0:
+                self.log_message(f"✓ Manual sync completed: {files_synced} files synchronized")
+                QMessageBox.information(
+                    self,
+                    "Manual Sync Complete",
+                    f"Successfully synchronized {files_synced} files."
+                )
+            else:
+                self.log_message("Manual sync: No changes detected")
+                QMessageBox.information(
+                    self,
+                    "Manual Sync Complete", 
+                    "No changes detected - all files are up to date."
+                )
+        except Exception as e:
+            logger.error(f"Error in manual sync: {e}")
+            self.log_message(f"✗ Manual sync error: {e}")
+            QMessageBox.critical(
+                self,
+                "Manual Sync Error",
+                f"Failed to perform manual sync:\n{str(e)}"
+            )
+    
+    def show_sync_settings(self):
+        """Show auto-sync settings dialog."""
+        try:
+            dialog = SyncSettingsDialog(self.auto_sync_manager.config_service, self)
+            dialog.settings_changed.connect(self.on_sync_settings_changed)
+            dialog.exec()
+        except Exception as e:
+            logger.error(f"Error showing sync settings dialog: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to show sync settings dialog:\n{str(e)}"
+            )
+    
+    def show_sync_status(self):
+        """Show sync status and statistics."""
+        try:
+            stats = self.auto_sync_manager.get_sync_statistics()
+            
+            # Format last sync time
+            last_sync = "Never"
+            if stats['last_sync_time']:
+                import datetime
+                last_sync = datetime.datetime.fromtimestamp(stats['last_sync_time']).strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Format last check time
+            last_check = "Never"
+            if stats['last_check_time']:
+                import datetime
+                last_check = datetime.datetime.fromtimestamp(stats['last_check_time']).strftime("%Y-%m-%d %H:%M:%S")
+            
+            status_text = (
+                f"Auto-Sync Status\n\n"
+                f"Active Studio: {stats['active_studio'] or 'None'}\n"
+                f"Files synced this session: {stats['files_synced_this_session']}\n"
+                f"Total syncs performed: {stats['total_syncs_performed']}\n"
+                f"Last sync: {last_sync}\n"
+                f"Last check: {last_check}\n\n"
+                f"Configuration:\n"
+                f"Periodic sync: {'Enabled' if stats['periodic_sync_enabled'] else 'Disabled'}\n"
+                f"Sync interval: {stats['sync_interval_minutes']} minutes\n\n"
+                f"Config file location:\n"
+                f"{self.auto_sync_manager.config_service.config_path}"
+            )
+            
+            QMessageBox.information(
+                self,
+                "Auto-Sync Status",
+                status_text
+            )
+            
+        except Exception as e:
+            logger.error(f"Error showing sync status: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to show sync status:\n{str(e)}"
+            )
+    
+    def on_sync_settings_changed(self):
+        """Handle sync settings changes."""
+        try:
+            # Reload settings in the auto-sync manager
+            self.auto_sync_manager.reload_settings()
+            self.log_message("Auto-sync settings updated")
+        except Exception as e:
+            logger.error(f"Error reloading sync settings: {e}")
+            self.log_message(f"Error reloading sync settings: {e}")
+    
     def show_about(self):
         """Show about dialog."""
         QMessageBox.about(
@@ -550,14 +746,20 @@ class MainWindow(QMainWindow):
             "• Automatic library and configuration management\n"
             "• Session logging and error handling\n"
             "• Modern, intuitive user interface\n\n"
-            "Created by: Vitaly Grosman\n"
-            "Indigo R&D Division\n\n"
-            "© 2024 Indigo R&D Division"
+            "Created by Vitaly Grosman\n\n"
+            "Indigo R&D Division\n"
+            "© 2025"
         )
     
     def closeEvent(self, event):
         """Handle application close event."""
         try:
+            # Perform auto-sync on application close
+            self.auto_sync_manager.sync_on_application_close()
+            
+            # Stop auto-sync manager
+            self.auto_sync_manager.stop()
+            
             # Stop worker thread if running
             if self.worker_thread and self.worker_thread.isRunning():
                 self.worker_thread.terminate()

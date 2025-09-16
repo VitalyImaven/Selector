@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoSyncSettings>
+  <SyncOnAutomationStudioClose enabled="true" />
+  <SyncOnSelectorClose enabled="true" />
+  <PeriodicSync enabled="true" intervalMinutes="5" />
+  <LogSyncOperations enabled="true" />
+  <BackupBeforeSync enabled="true" maxBackups="3" />
+</AutoSyncSettings>
