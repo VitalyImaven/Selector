@@ -21,6 +21,7 @@ from src.utils.logger import SessionLogger
 from src.ui.styles import MAIN_STYLE
 from src.ui.setup_dialog import SetupDialog
 from src.ui.sync_settings_dialog import SyncSettingsDialog
+from src.ui.help_dialog import HelpDialog
 
 
 logger = logging.getLogger(__name__)
@@ -132,8 +133,11 @@ class MainWindow(QMainWindow):
                 # Running in PyInstaller bundle
                 base_path = sys._MEIPASS
             else:
-                # Running in development
-                base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                # Running in development - go up to project root
+                current_file = os.path.abspath(__file__)
+                ui_dir = os.path.dirname(current_file)
+                src_dir = os.path.dirname(ui_dir)
+                base_path = os.path.dirname(src_dir)
             
             logo_path = os.path.join(base_path, 'assets', 'logo.png')
             
@@ -232,6 +236,19 @@ class MainWindow(QMainWindow):
         
         # Help menu
         help_menu = menubar.addMenu("Help")
+        
+        # How To submenu
+        how_to_menu = help_menu.addMenu("How To")
+        
+        interactive_help_action = QAction("Interactive Help...", self)
+        interactive_help_action.triggered.connect(self.show_interactive_help)
+        how_to_menu.addAction(interactive_help_action)
+        
+        quick_start_action = QAction("Quick Start Guide", self)
+        quick_start_action.triggered.connect(self.show_quick_start)
+        how_to_menu.addAction(quick_start_action)
+        
+        help_menu.addSeparator()
         
         about_action = QAction("About", self)
         about_action.triggered.connect(self.show_about)
@@ -747,6 +764,78 @@ class MainWindow(QMainWindow):
         except Exception as e:
             logger.error(f"Error reloading sync settings: {e}")
             self.log_message(f"Error reloading sync settings: {e}")
+    
+    def show_interactive_help(self):
+        """Show the interactive help dialog."""
+        try:
+            help_dialog = HelpDialog(self)
+            help_dialog.exec()
+        except Exception as e:
+            logger.error(f"Error showing interactive help: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to show interactive help:\n{str(e)}"
+            )
+    
+    def show_quick_start(self):
+        """Show quick start guide."""
+        try:
+            quick_start_text = """
+            <h2>🚀 Quick Start Guide</h2>
+            
+            <h3>1. First-Time Setup</h3>
+            <p>When you first open the application:</p>
+            <ul>
+                <li><strong>Add AS 4.5:</strong> Click "Add AS 4.5" and browse to your AutomationStudio.exe</li>
+                <li><strong>Add AS 6:</strong> Click "Add AS 6" and browse to your AutomationStudio.exe</li>
+                <li><strong>Set Project Root:</strong> Browse to your project folder (contains Logical & Physical)</li>
+                <li><strong>Save:</strong> Click "Save & Continue"</li>
+            </ul>
+            
+            <h3>2. Using the Application</h3>
+            <ol>
+                <li><strong>Select Version:</strong> Click on "Automation Studio 4.5" or "Automation Studio 6"</li>
+                <li><strong>Open Project:</strong> Click the green "Open Project" button</li>
+                <li><strong>Work Normally:</strong> Use Automation Studio as usual</li>
+                <li><strong>Auto-Sync:</strong> Your changes are automatically saved when you close AS</li>
+            </ol>
+            
+            <h3>3. Switching Versions</h3>
+            <ul>
+                <li><strong>Close AS</strong> (your work is auto-synced)</li>
+                <li><strong>Select different version</strong> in the Selector</li>
+                <li><strong>Click "Open Project"</strong> again</li>
+                <li><strong>Your previous work is preserved!</strong></li>
+            </ul>
+            
+            <h3>4. Key Benefits</h3>
+            <ul>
+                <li>✅ <strong>Never lose work</strong> when switching AS versions</li>
+                <li>✅ <strong>One project</strong> works with multiple AS versions</li>
+                <li>✅ <strong>Automatic sync</strong> every 5 minutes and when AS closes</li>
+                <li>✅ <strong>Safe backups</strong> before any file operations</li>
+            </ul>
+            
+            <div style="background-color: #e8f6f3; padding: 15px; border-left: 4px solid #16a085; margin: 15px 0;">
+                <strong>💡 Need More Help?</strong><br>
+                Use <strong>Help → How To → Interactive Help</strong> for detailed explanations of every feature.
+            </div>
+            """
+            
+            QMessageBox.information(
+                self,
+                "Quick Start Guide",
+                quick_start_text
+            )
+            
+        except Exception as e:
+            logger.error(f"Error showing quick start guide: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to show quick start guide:\n{str(e)}"
+            )
     
     def show_about(self):
         """Show about dialog."""

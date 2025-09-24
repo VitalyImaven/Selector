@@ -16,7 +16,7 @@ if errorlevel 1 (
 
 echo.
 echo Step 2: Building executable with PyInstaller...
-pyinstaller automation_studio_selector.spec --clean --noconfirm
+pyinstaller automation_studio_selector_advanced.spec --clean --noconfirm
 if errorlevel 1 (
     echo ERROR: Failed to build executable
     pause
