@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QWidget, QMessageBox, QProgressBar,
     QTextEdit, QGroupBox, QStatusBar, QMenuBar, QMenu, QLineEdit, QFileDialog,
-    QSizePolicy
+    QSizePolicy, QInputDialog
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction, QFont, QIcon, QPixmap
@@ -85,8 +85,9 @@ class MainWindow(QMainWindow):
         self.auto_sync_manager = AutoSyncManager(self.session_logger)
         
         # UI components
-        self.project_path_edit: Optional[QLineEdit] = None
-        self.browse_project_btn: Optional[QPushButton] = None
+        self.project_list: Optional[QListWidget] = None
+        self.add_project_btn: Optional[QPushButton] = None
+        self.remove_project_btn: Optional[QPushButton] = None
         self.studio_list: Optional[QListWidget] = None
         self.select_button: Optional[QPushButton] = None
         self.progress_bar: Optional[QProgressBar] = None
@@ -105,8 +106,8 @@ class MainWindow(QMainWindow):
     def setup_ui(self):
         """Setup the user interface."""
         self.setWindowTitle("Automation Studio Selector")
-        self.setMinimumSize(650, 650)
-        self.resize(700, 900)
+        self.setMinimumSize(800, 550)
+        self.resize(850, 600)
         
         # Apply styles
         self.setStyleSheet(MAIN_STYLE)
@@ -255,31 +256,41 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
     
     def setup_project_root_group(self, parent_layout):
-        """Setup the project root selection group."""
-        group = QGroupBox("Project Root Directory")
+        """Setup the project selection group with multiple projects support."""
+        group = QGroupBox("Project Selection")
         layout = QVBoxLayout(group)
         
         # Instructions
         instructions = QLabel(
-            "Select the root directory of your project (should contain Logical and Physical folders):"
+            "Select a project to work with. You can add multiple projects and switch between them:"
         )
         instructions.setWordWrap(True)
         layout.addWidget(instructions)
         
-        # Path selection layout
-        path_layout = QHBoxLayout()
+        # Project list
+        self.project_list = QListWidget()
+        self.project_list.setMinimumHeight(60)
+        self.project_list.setMaximumHeight(80)
+        self.project_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.project_list.itemSelectionChanged.connect(self.on_project_selection_changed)
+        layout.addWidget(self.project_list)
         
-        self.project_path_edit = QLineEdit()
-        self.project_path_edit.setReadOnly(True)
-        self.project_path_edit.setPlaceholderText("No project root selected...")
-        self.project_path_edit.textChanged.connect(self.on_project_path_changed)
-        path_layout.addWidget(self.project_path_edit)
+        # Buttons layout
+        button_layout = QHBoxLayout()
         
-        self.browse_project_btn = QPushButton("Browse...")
-        self.browse_project_btn.clicked.connect(self.browse_project_root)
-        path_layout.addWidget(self.browse_project_btn)
+        self.add_project_btn = QPushButton("Add Project...")
+        self.add_project_btn.clicked.connect(self.add_new_project)
+        button_layout.addWidget(self.add_project_btn)
         
-        layout.addLayout(path_layout)
+        self.remove_project_btn = QPushButton("Remove Selected")
+        self.remove_project_btn.setObjectName("danger")
+        self.remove_project_btn.clicked.connect(self.remove_selected_project)
+        self.remove_project_btn.setEnabled(False)
+        button_layout.addWidget(self.remove_project_btn)
+        
+        button_layout.addStretch()
+        
+        layout.addLayout(button_layout)
         parent_layout.addWidget(group)
     
     def setup_studio_selection_group(self, parent_layout):
@@ -296,11 +307,11 @@ class MainWindow(QMainWindow):
         
         # Studio list with proper sizing
         self.studio_list = QListWidget()
-        self.studio_list.setMinimumHeight(140)
-        self.studio_list.setMaximumHeight(180)
+        self.studio_list.setMinimumHeight(100)
+        self.studio_list.setMaximumHeight(130)
         self.studio_list.setSizePolicy(
             QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding
+            QSizePolicy.Policy.Fixed
         )
         self.studio_list.itemSelectionChanged.connect(self.on_studio_selection_changed)
         self.studio_list.itemDoubleClicked.connect(self.open_selected_project)
@@ -315,8 +326,6 @@ class MainWindow(QMainWindow):
         
         self.refresh_btn = QPushButton("Refresh List")
         self.refresh_btn.clicked.connect(self.refresh_studio_list)
-        self.refresh_btn.setFixedHeight(40)  # Slightly larger buttons
-        self.refresh_btn.setMinimumWidth(120)
         button_layout.addWidget(self.refresh_btn)
         
         button_layout.addStretch()
@@ -325,8 +334,6 @@ class MainWindow(QMainWindow):
         self.select_button.setObjectName("primary")
         self.select_button.clicked.connect(self.open_selected_project)
         self.select_button.setEnabled(False)
-        self.select_button.setFixedHeight(40)  # Slightly larger buttons
-        self.select_button.setMinimumWidth(140)
         button_layout.addWidget(self.select_button)
         
         layout.addLayout(button_layout)
@@ -374,17 +381,26 @@ class MainWindow(QMainWindow):
             # Load studios
             self.available_studios = self.config_manager.get_automation_studios()
             
-            # Load project root
-            self.project_root = self.config_manager.get_project_root()
+            # Migrate old single project to new list format
+            self.config_manager.migrate_single_project_to_list()
             
-            if not self.available_studios or not self.project_root:
-                # Show setup dialog if configuration is incomplete
+            # Load project paths
+            self.load_project_list()
+            
+            if not self.available_studios:
+                # Show setup dialog if no studios configured
                 QTimer.singleShot(100, self.show_setup_dialog)
             else:
                 self.refresh_studio_list()
-                self.update_project_root_display()
                 self.log_message(f"Loaded {len(self.available_studios)} studio configurations")
-                self.log_message(f"Project root: {self.project_root}")
+                
+                # Set project root from last selected project
+                last_project = self.config_manager.get_last_selected_project()
+                if last_project and last_project.exists():
+                    self.project_root = last_project
+                    self.log_message(f"Active project: {self.project_root}")
+                else:
+                    self.project_root = None
                 
         except Exception as e:
             logger.error(f"Error loading configuration: {e}")
@@ -431,12 +447,204 @@ class MainWindow(QMainWindow):
         self.load_configuration()
         self.log_message("Configuration updated successfully")
     
-    def update_project_root_display(self):
-        """Update the project root display in the UI."""
-        if self.project_root and self.project_path_edit:
-            self.project_path_edit.setText(str(self.project_root))
-        elif self.project_path_edit:
-            self.project_path_edit.clear()
+    def load_project_list(self):
+        """Load and display the list of configured projects."""
+        try:
+            self.project_list.clear()
+            project_paths = self.config_manager.get_project_paths()
+            
+            if not project_paths:
+                item = QListWidgetItem("No projects configured - click 'Add Project...' to add one")
+                item.setFlags(Qt.ItemFlag.NoItemFlags)
+                self.project_list.addItem(item)
+                return
+            
+            # Add projects to list
+            for project_data in project_paths:
+                project_name = project_data.get('name', 'Unknown Project')
+                project_path = project_data.get('path', '')
+                project_desc = project_data.get('description', '')
+                
+                # Create compact display text on one line
+                if project_desc:
+                    display_text = f"{project_name} - {project_path} ({project_desc})"
+                else:
+                    display_text = f"{project_name} - {project_path}"
+                
+                item = QListWidgetItem(display_text)
+                item.setData(Qt.ItemDataRole.UserRole, project_data)
+                self.project_list.addItem(item)
+            
+            # Select last used project
+            last_project_path = self.config_manager.get_last_selected_project()
+            if last_project_path:
+                for i in range(self.project_list.count()):
+                    item = self.project_list.item(i)
+                    project_data = item.data(Qt.ItemDataRole.UserRole)
+                    if project_data and project_data.get('path') == str(last_project_path):
+                        self.project_list.setCurrentItem(item)
+                        break
+            
+        except Exception as e:
+            logger.error(f"Error loading project list: {e}")
+            self.log_message(f"Error loading project list: {e}")
+    
+    def on_project_selection_changed(self):
+        """Handle project selection changes."""
+        try:
+            current_item = self.project_list.currentItem()
+            has_selection = current_item is not None
+            
+            # Enable/disable remove button
+            project_data = None
+            if has_selection:
+                project_data = current_item.data(Qt.ItemDataRole.UserRole)
+            
+            self.remove_project_btn.setEnabled(has_selection and project_data is not None)
+            
+            # Update active project root
+            if project_data:
+                project_path = Path(project_data['path'])
+                if project_path.exists() and self.validate_project_root(project_path):
+                    self.project_root = project_path
+                    self.config_manager.set_last_selected_project(project_path)
+                    self.log_message(f"Selected project: {project_data['name']}")
+                else:
+                    self.project_root = None
+                    self.log_message(f"Warning: Selected project path is invalid: {project_path}")
+            else:
+                self.project_root = None
+            
+            # Update studio selection state
+            self.on_studio_selection_changed()
+            
+        except Exception as e:
+            logger.error(f"Error handling project selection: {e}")
+            self.log_message(f"Error handling project selection: {e}")
+    
+    def add_new_project(self):
+        """Add a new project to the list."""
+        try:
+            # Get project directory
+            dialog = QFileDialog(self)
+            dialog.setWindowTitle("Select Project Directory")
+            dialog.setFileMode(QFileDialog.FileMode.Directory)
+            
+            if dialog.exec() == QFileDialog.DialogCode.Accepted:
+                selected_dirs = dialog.selectedFiles()
+                if selected_dirs:
+                    project_path = Path(selected_dirs[0])
+                    
+                    # Validate project structure
+                    if not self.validate_project_root(project_path):
+                        QMessageBox.warning(
+                            self,
+                            "Invalid Project Directory",
+                            "The selected directory does not appear to be a valid project root.\n\n"
+                            "Please ensure the directory contains 'Logical' and 'Physical' subdirectories."
+                        )
+                        return
+                    
+                    # Get project name from user
+                    from PyQt6.QtWidgets import QInputDialog
+                    project_name = project_path.name  # Default to folder name
+                    
+                    name, ok = QInputDialog.getText(
+                        self,
+                        "Project Name",
+                        "Enter a name for this project:",
+                        text=project_name
+                    )
+                    
+                    if ok and name.strip():
+                        # Get optional description
+                        description, ok = QInputDialog.getText(
+                            self,
+                            "Project Description",
+                            "Enter a description (optional):",
+                            text=""
+                        )
+                        
+                        if not ok:
+                            description = ""
+                        
+                        # Add to configuration
+                        if self.config_manager.add_project_path(name.strip(), project_path, description.strip()):
+                            self.load_project_list()
+                            self.log_message(f"Added project: {name.strip()}")
+                            
+                            # Select the newly added project
+                            for i in range(self.project_list.count()):
+                                item = self.project_list.item(i)
+                                project_data = item.data(Qt.ItemDataRole.UserRole)
+                                if project_data and project_data.get('path') == str(project_path):
+                                    self.project_list.setCurrentItem(item)
+                                    break
+                        else:
+                            QMessageBox.warning(
+                                self,
+                                "Add Project Failed",
+                                "Failed to add project to configuration.\n\n"
+                                "The project may already exist in the list."
+                            )
+                            
+        except Exception as e:
+            logger.error(f"Error adding new project: {e}")
+            self.log_message(f"Error adding new project: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to add new project:\n{str(e)}"
+            )
+    
+    def remove_selected_project(self):
+        """Remove the selected project from the list."""
+        try:
+            current_item = self.project_list.currentItem()
+            if not current_item:
+                return
+            
+            project_data = current_item.data(Qt.ItemDataRole.UserRole)
+            if not project_data:
+                return
+            
+            project_name = project_data.get('name', 'Unknown Project')
+            project_path = Path(project_data.get('path', ''))
+            
+            # Confirm removal
+            reply = QMessageBox.question(
+                self,
+                "Remove Project",
+                f"Are you sure you want to remove this project from the list?\n\n"
+                f"Project: {project_name}\n"
+                f"Path: {project_path}\n\n"
+                f"Note: This only removes it from the selector list.\n"
+                f"Your actual project files will not be deleted.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+            
+            if reply == QMessageBox.StandardButton.Yes:
+                if self.config_manager.remove_project_path(project_path):
+                    self.load_project_list()
+                    self.project_root = None  # Clear current selection
+                    self.log_message(f"Removed project: {project_name}")
+                    self.on_studio_selection_changed()  # Update button states
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Remove Failed",
+                        "Failed to remove project from configuration."
+                    )
+                    
+        except Exception as e:
+            logger.error(f"Error removing project: {e}")
+            self.log_message(f"Error removing project: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to remove project:\n{str(e)}"
+            )
     
     def browse_project_root(self):
         """Browse for project root directory."""
@@ -516,7 +724,8 @@ class MainWindow(QMainWindow):
             
             # Add studios to list
             for studio in self.available_studios:
-                item_text = f"{studio.display_name}\nPath: {studio.executable_path}"
+                # Show full text without truncation
+                item_text = f"{studio.display_name} - {studio.executable_path}"
                 item = QListWidgetItem(item_text)
                 item.setData(Qt.ItemDataRole.UserRole, studio)
                 self.studio_list.addItem(item)
@@ -629,7 +838,9 @@ class MainWindow(QMainWindow):
     def set_ui_enabled(self, enabled: bool):
         """Enable or disable UI elements."""
         self.studio_list.setEnabled(enabled)
-        self.browse_project_btn.setEnabled(enabled)
+        self.project_list.setEnabled(enabled)
+        self.add_project_btn.setEnabled(enabled)
+        self.remove_project_btn.setEnabled(enabled and self.project_list.currentItem() is not None)
         self.refresh_btn.setEnabled(enabled)
         
         # Only enable select button if all conditions are met

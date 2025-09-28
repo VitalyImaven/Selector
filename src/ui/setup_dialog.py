@@ -273,7 +273,7 @@ class SetupDialog(QDialog):
         self.studio_list.clear()
         
         for studio in self.configured_studios:
-            item_text = f"{studio.display_name}\n{studio.executable_path}"
+            item_text = f"{studio.display_name} - {studio.executable_path}"
             item = QListWidgetItem(item_text)
             item.setData(Qt.ItemDataRole.UserRole, studio)
             self.studio_list.addItem(item)

@@ -31,12 +31,12 @@ QPushButton {
     background-color: #3498db;
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    font-size: 14px;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
     font-weight: 600;
-    min-width: 120px;
-    min-height: 40px;
+    min-width: 100px;
+    min-height: 30px;
 }
 
 QPushButton:hover {
@@ -54,9 +54,9 @@ QPushButton:disabled {
 
 QPushButton#primary {
     background-color: #27ae60;
-    min-width: 150px;
-    min-height: 45px;
-    font-size: 16px;
+    min-width: 120px;
+    min-height: 35px;
+    font-size: 14px;
 }
 
 QPushButton#primary:hover {
@@ -83,18 +83,19 @@ QListWidget {
     background-color: white;
     border: 2px solid #ecf0f1;
     border-radius: 8px;
-    padding: 8px;
-    font-size: 14px;
+    padding: 2px;
+    font-size: 13px;
     selection-background-color: #16a085;
     selection-color: white;
     outline: none;
 }
 
 QListWidget::item {
-    padding: 12px;
+    padding: 2px 8px;
     border-bottom: 1px solid #ecf0f1;
-    border-radius: 4px;
-    margin: 2px 0px;
+    border-radius: 2px;
+    margin: 0px;
+    height: 24px;
 }
 
 QListWidget::item:hover {
