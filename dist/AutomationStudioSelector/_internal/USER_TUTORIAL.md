@@ -116,36 +116,205 @@ The setup dialog will appear automatically:
 
 ## Understanding the Interface
 
-The main window has several sections:
+The main window has several sections that work together to provide a seamless experience:
 
 ### 🏠 **Header Section**
-- **Logo**: Indigo R&D Division branding
-- **Title**: "Automation Studio Selector"
+- **Logo**: Your custom blue logo with checkmark and pointing hand design
+- **Title**: "Automation Studio Selector" - clearly identifies the application
 
 ### 📁 **Project Root Directory Section**
-- **Current Path**: Shows your selected project directory
-- **Browse Button**: Change project location anytime
+
+This section shows and controls your current project location.
+
+#### **What You'll See:**
+- **Instructions Text**: "Select the root directory of your project (should contain Logical and Physical folders):"
+- **Path Display Field**: Shows the currently selected project directory path
+  - **Gray placeholder text**: "No project root selected..." when no path is set
+  - **Black text**: Shows the actual path when a project is selected
+- **Browse Button**: Blue button labeled "Browse..." for selecting a different project
+
+#### **How to Use:**
+- **View Current Path**: The text field shows your active project directory
+- **Change Project**: Click "Browse..." to select a different project folder
+- **Validation**: The application automatically checks that your selected folder contains "Logical" and "Physical" subdirectories
+- **Auto-Save**: Your selection is automatically saved to configuration
+
+#### **Requirements:**
+The selected directory must contain:
+- **Logical/** subdirectory (containing your AS libraries)
+- **Physical/** subdirectory (containing your AS physical configurations)
 
 ### 🎯 **Select Automation Studio Section**
-- **Studio List**: Shows all configured AS versions
-- **Selection**: Click to select which version to use
-- **Buttons**: 
-  - **Refresh List**: Reload AS configurations
-  - **Open Project**: Start the selected AS with your project
+
+This is the main working area where you choose which AS version to use.
+
+#### **What You'll See:**
+- **Instructions Text**: "Choose which Automation Studio version to use for opening your project:"
+- **Studio List**: A scrollable list showing all your configured Automation Studio versions
+  - **Format**: "Automation Studio X.X" on the first line
+  - **Path Info**: "Path: [executable location]" on the second line
+  - **Selection Highlight**: Selected item appears with teal background and white text
+- **Two Buttons**: 
+  - **"Refresh List"** (blue button on the left)
+  - **"Open Project"** (green button on the right)
+
+#### **Studio List Details:**
+- **No Studios Configured**: Shows "No Automation Studios configured" in gray text
+- **Multiple Studios**: Each AS version appears as a separate item
+- **Example Display**:
+  ```
+  Automation Studio 4.5
+  Path: C:\BrAutomation\AS45\Bin-en\AutomationStudio.exe
+  
+  Automation Studio 6
+  Path: C:\Program Files (x86)\BRAutomation\AS6\bin-en\AutomationStudio.exe
+  ```
+
+#### **How to Use:**
+- **Select Version**: Click once on any AS version to select it
+- **Double-Click Shortcut**: Double-click to select and immediately open project
+- **Visual Feedback**: Selected item is highlighted in teal color
+- **Button Activation**: "Open Project" button becomes active (green) when valid selection is made
+
+#### **Button Functions:**
+
+##### **"Refresh List" Button (Blue):**
+- **Purpose**: Reload the list of configured Automation Studio installations
+- **When to Use**: 
+  - After adding new AS installations through the setup dialog
+  - If the list appears outdated or empty
+  - After modifying AS configurations
+- **What It Does**: 
+  - Re-reads your saved configuration
+  - Updates the display with current AS installations
+  - Preserves your last selected studio (auto-selects it)
+
+##### **"Open Project" Button (Green, Primary Action):**
+- **Purpose**: Execute the complete project setup and launch the selected AS
+- **When Enabled**: Only when BOTH conditions are met:
+  - A studio version is selected (highlighted in teal)
+  - A valid project root directory is configured
+- **When Disabled**: Button appears gray when conditions aren't met
+- **What It Does**: 
+  - Validates your project structure
+  - Clears the active Libraries directory
+  - Copies version-specific libraries to active location
+  - Updates Physical.pkg with version-specific configuration
+  - Updates project file (OCB.apj) with version-specific template
+  - Launches the selected Automation Studio with your project
+
+#### **Selection Behavior:**
+- **Last Used**: Application remembers your last selected studio and pre-selects it
+- **Visual Feedback**: Selected studio has teal background with white text
+- **Hover Effect**: Items show light gray background when hovering
+- **Keyboard**: You can use arrow keys to navigate and Enter to activate
 
 ### ⚙️ **Operation Progress Section**
-- **Progress Bar**: Shows during project setup operations
-- **Status Updates**: Real-time progress information
+
+This section provides real-time feedback during project setup operations.
+
+#### **What You'll See:**
+- **Group Title**: "Operation Progress"
+- **Progress Bar**: Animated blue progress bar (appears only during operations)
+- **Hidden by Default**: Section is compact when no operations are running
+
+#### **During Operations:**
+The progress bar shows six distinct phases:
+1. **"Starting project setup..."** - Initialization
+2. **"Validating project structure..."** - Checking project folders
+3. **"Clearing Libraries directory..."** - Removing old active files
+4. **"Copying version-specific libraries..."** - Installing AS-specific libraries
+5. **"Updating Physical.pkg file..."** - Configuring physical settings
+6. **"Updating project file..."** - Setting up main project file
+7. **"Opening project..."** - Launching Automation Studio
+
+#### **Visual Indicators:**
+- **Blue Animated Bar**: Shows operation is in progress
+- **Indeterminate Progress**: Bar moves continuously (operation time varies)
+- **Disappears**: Progress bar hides when operation completes
 
 ### 📝 **Session Log Section**
-- **Activity Log**: Shows all operations and their results
-- **Timestamps**: When each action occurred
-- **Status Icons**: ✓ for success, ✗ for errors
-- **Clear Log Button**: Clean the display
+
+The session log provides a detailed record of all application activities.
+
+#### **What You'll See:**
+- **Group Title**: "Session Log"
+- **Log Display Area**: Scrollable text area showing timestamped messages
+- **Clear Log Button**: Gray "Clear Log" button below the log area
+
+#### **Log Message Format:**
+- **Timestamp**: `[HH:MM:SS]` in 24-hour format
+- **Status Icon**: 
+  - **✓** for successful operations
+  - **✗** for errors or failures
+  - **No icon** for informational messages
+- **Message Text**: Detailed description of what happened
+
+#### **What Gets Logged:**
+- **Application Startup**: Configuration loading, studio detection
+- **User Actions**: Studio selection, project opening, manual sync
+- **Auto-Sync Activities**: Background synchronization operations
+- **File Operations**: Copying, deleting, updating files
+- **Errors and Warnings**: Detailed error messages with context
+- **Configuration Changes**: Settings updates, path changes
+
+#### **Example Log Entries:**
+```
+[14:30:15] Loaded 2 studio configurations
+[14:30:15] Project root: C:\MyProject
+[14:30:20] User selected: AS 6 (Version 6)
+[14:30:22] ✓ Auto-sync completed: 3 files synchronized
+[14:30:25] Starting project setup for Automation Studio 6
+[14:30:26] ✓ Project setup completed successfully
+```
+
+#### **Log Management:**
+- **Auto-Scroll**: Automatically scrolls to show latest messages
+- **Clear Display**: "Clear Log" button clears the visible log (doesn't affect log files)
+- **Persistent Logs**: Detailed logs are also saved to files in your user directory
 
 ### 📊 **Status Bar**
-- **Bottom Bar**: Shows current operation status
-- **Quick Info**: Number of loaded studios, current operations
+
+The status bar at the bottom provides quick status information.
+
+#### **What You'll See:**
+- **Operation Status**: Current activity or last completed operation
+- **Studio Count**: "Loaded X studio(s)" when studios are configured
+- **Sync Status**: "Auto-sync: X files synchronized" during sync operations
+- **Error Indicators**: Brief error messages when issues occur
+
+#### **Status Examples:**
+- **"Ready"** - Application idle, ready for user action
+- **"Operation completed successfully"** - Project setup finished
+- **"Auto-sync: 5 files synchronized"** - Background sync completed
+- **"Project root set to: MyProject"** - Configuration updated
+
+### 📋 **Menu System**
+
+The application provides comprehensive menu access to all features.
+
+#### **File Menu:**
+- **"Setup Automation Studio Paths..."** - Configure AS installation locations
+- **"Change Project Root..."** - Select different project directory
+- **"Manual Sync Now"** - Immediate synchronization of current changes
+- **"Exit"** - Close the application
+
+#### **Settings Menu:**
+- **Sync Submenu:**
+  - **"Auto-Sync Settings..."** - Configure automatic synchronization behavior
+  - **"View Sync Status"** - Display sync statistics and current status
+
+#### **Help Menu:**
+- **How To Submenu:**
+  - **"Interactive Help..."** - Opens comprehensive help dialog with navigation
+  - **"Quick Start Guide"** - Brief overview popup for immediate guidance
+- **"About"** - Application information and credits
+
+#### **Menu Shortcuts:**
+- **Alt + F**: Open File menu
+- **Alt + S**: Open Settings menu  
+- **Alt + H**: Open Help menu
+- **F1**: Quick access to help (standard Windows convention)
 
 ---
 
@@ -223,7 +392,7 @@ The auto-sync system is one of the most powerful features - it ensures you never
 
 The system automatically copies your changes from the active working directory back to the permanent version-specific storage.
 
-**Example Flow:**
+**Detailed Example Flow:**
 1. You select **AS 6** → Libraries_6 content is copied to Libraries
 2. You work in AS and modify files in Libraries
 3. **Auto-sync triggers** → Your changes are copied from Libraries back to Libraries_6
@@ -232,43 +401,185 @@ The system automatically copies your changes from the active working directory b
 
 ### ⚡ **Auto-Sync Triggers**
 
-Auto-sync happens automatically when:
+Auto-sync happens automatically in three different scenarios:
 
-1. **Automation Studio Closes** (default: enabled)
-   - When you close AS, changes are immediately synced
-   
-2. **Selector Application Closes** (default: enabled)
-   - When you close the Selector, final sync is performed
-   
-3. **Periodic Timer** (default: every 5 minutes)
-   - Regular checks for changes and syncs if found
+#### **1. 🔴 Automation Studio Closes (Default: Enabled)**
+- **Trigger**: When you close any Automation Studio process
+- **Action**: Immediately syncs all changes back to version-specific storage
+- **Why**: Captures your work session changes the moment you finish working
+- **Detection**: The application monitors AS processes and detects when they close
+- **Timing**: Sync happens within seconds of AS closing
 
-### 📝 **Auto-Sync Logging**
+#### **2. 🚪 Selector Application Closes (Default: Enabled)**
+- **Trigger**: When you close the Selector application
+- **Action**: Final sync to ensure nothing is lost
+- **Why**: Safety net for any remaining changes that might not have been synced
+- **Timing**: Happens during application shutdown process
 
-All sync operations are logged:
-- **Session Log**: Shows in the application window
-- **Log Files**: Stored in `%USERPROFILE%\.automation_selector\logs\`
-- **Timestamps**: When each sync occurred
-- **File Counts**: How many files were synced
+#### **3. ⏰ Periodic Timer (Default: Every 5 minutes)**
+- **Trigger**: Regular interval while you work
+- **Action**: Checks for changes and syncs if found
+- **Why**: Continuous backup of your work while AS is running
+- **Configurable**: Interval can be adjusted from 1-60 minutes
+- **Smart**: Only syncs if actual changes are detected
+
+### 📝 **Auto-Sync Logging and Monitoring**
+
+#### **Session Log Display:**
+All sync operations appear in the application's Session Log:
+- **Success Messages**: "✓ Auto-sync completed: X files synchronized"
+- **Error Messages**: "✗ Auto-sync error: [detailed error message]"
+- **Timestamps**: Exact time when each sync occurred
+- **File Counts**: Number of files that were synchronized
+
+#### **Status Bar Updates:**
+- **"Auto-sync: X files synchronized"** - Brief confirmation message
+- **"Auto-sync error: [message]"** - Error notifications
+- **Temporary Display**: Messages appear for 3-5 seconds
+
+#### **Persistent Log Files:**
+All sync activities are permanently recorded in:
+- **Application Log**: `%USERPROFILE%\.automation_selector\logs\application.log`
+- **Session Logs**: `%USERPROFILE%\.automation_selector\logs\session_YYYYMMDD_HHMMSS.log`
 
 ### 🛡️ **Safety Features**
 
-- **Backups**: Creates timestamped backups before overwriting (default: keep 3)
-- **Change Detection**: Only syncs files that actually changed
-- **Error Handling**: Graceful handling of sync failures
-- **Validation**: Ensures file integrity during operations
+#### **📦 Automatic Backups:**
+- **Timestamped Backups**: Creates backups with format `Libraries_6_backup_YYYYMMDD_HHMMSS`
+- **Default Retention**: Keeps the last 3 backup versions automatically
+- **Before Overwriting**: Backup is created before any sync operation
+- **Configurable**: Number of backups can be adjusted (0-10)
+- **Cleanup**: Old backups are automatically removed when limit is exceeded
+
+#### **🔍 Intelligent Change Detection:**
+- **File Comparison**: Compares file size and modification time
+- **Efficiency**: Only syncs files that actually changed
+- **Tolerance**: 1-second timestamp tolerance to avoid false positives
+- **Recursive**: Scans all subdirectories for changes
+- **Performance**: Optimized to handle large library directories
+
+#### **🛡️ Error Handling:**
+- **Graceful Failures**: If one file fails, others continue to sync
+- **Detailed Logging**: Full error details recorded in logs
+- **User Notification**: Error messages shown in Session Log and status bar
+- **Retry Logic**: Automatic retry for temporary failures
+- **Rollback**: Can restore from backups if sync fails
+
+### 📊 **Monitoring Auto-Sync Activity**
+
+#### **Real-Time Monitoring:**
+Use **Settings → Sync → View Sync Status** to see:
+- **Active Studio**: Currently selected AS version being monitored
+- **Files Synced This Session**: Count of files synchronized since application started
+- **Total Syncs Performed**: Lifetime count of sync operations
+- **Last Sync Time**: Timestamp of most recent sync operation
+- **Last Check Time**: When the system last checked for changes
+- **Current Configuration**: Periodic sync status and interval
+
+#### **Log Analysis:**
+- **Session Log**: Real-time display of sync activities
+- **File Logs**: Permanent record for historical analysis
+- **Error Tracking**: Detailed error information for troubleshooting
+- **Performance Metrics**: Timing information for sync operations
+
+### ⚙️ **Configuring Auto-Sync**
+
+Access configuration through **Settings → Sync → Auto-Sync Settings...**
+
+#### **Sync Triggers Configuration:**
+- **☑️ Sync when Automation Studio closes**
+  - **Default**: Enabled
+  - **Recommendation**: Keep enabled for immediate change capture
+  - **Impact**: Ensures work is saved the moment you finish
+
+- **☑️ Sync when Selector application closes**
+  - **Default**: Enabled  
+  - **Recommendation**: Keep enabled as safety net
+  - **Impact**: Final protection against data loss
+
+#### **Periodic Sync Configuration:**
+- **☑️ Enable periodic sync**
+  - **Default**: Enabled
+  - **Recommendation**: Keep enabled for continuous protection
+  - **Impact**: Background protection while working
+
+- **⏱️ Check interval: [X] minutes**
+  - **Default**: 5 minutes
+  - **Range**: 1-60 minutes
+  - **Considerations**:
+    - **Lower values (1-3 min)**: More protection, slightly higher CPU usage
+    - **Higher values (10-30 min)**: Less frequent checking, lower resource usage
+    - **For large projects**: Consider 10+ minutes
+    - **For critical work**: Consider 2-3 minutes
+
+#### **Safety & Logging Configuration:**
+- **☑️ Log sync operations**
+  - **Default**: Enabled
+  - **Recommendation**: Keep enabled for troubleshooting
+  - **Impact**: Detailed record of all sync activities
+
+- **☑️ Create backups before sync**
+  - **Default**: Enabled
+  - **Recommendation**: Keep enabled for safety
+  - **Impact**: Safety net in case of sync errors
+
+- **🔢 Max backups: [X]**
+  - **Default**: 3 backups
+  - **Range**: 0-10 backups
+  - **Considerations**:
+    - **0**: Unlimited backups (uses more disk space)
+    - **1-3**: Minimal disk usage, basic safety
+    - **5-10**: High safety, more disk usage
+
+### 🔄 **Manual Sync Operations**
+
+Sometimes you want to synchronize immediately without waiting for automatic triggers.
+
+#### **How to Perform Manual Sync:**
+1. **Go to**: `File → Manual Sync Now`
+2. **Wait**: Operation completes automatically
+3. **Check Results**: Success/failure message appears
+4. **Review Log**: Detailed results shown in Session Log
+
+#### **When to Use Manual Sync:**
+- **Before switching AS versions**: Ensure all changes are captured
+- **After making important changes**: Immediate backup of critical work
+- **Testing sync functionality**: Verify that auto-sync system is working
+- **Before closing application**: Extra safety measure
+- **After configuration changes**: Ensure new settings work correctly
+
+#### **What Manual Sync Does:**
+1. **Scans Libraries directory**: Checks all files for changes
+2. **Compares with source**: Determines what has changed since last sync
+3. **Creates backup**: (if enabled) Creates timestamped backup of destination
+4. **Copies changes**: Transfers modified files to version-specific storage
+5. **Updates logs**: Records all operations with timestamps
+6. **Shows results**: Displays success message or error details
+
+#### **Manual Sync Results:**
+- **Success**: "✓ Manual sync completed: X files synchronized"
+- **No Changes**: "Manual sync: No changes detected"
+- **Error**: "✗ Manual sync error: [detailed error message]"
 
 ---
 
 ## Settings and Configuration
 
+The application provides comprehensive configuration options to customize the auto-sync behavior to your specific needs.
+
 ### ⚙️ **Accessing Settings**
 
+#### **Main Settings Access:**
 1. Click **"Settings"** in the menu bar
 2. Select **"Sync"** submenu
 3. Choose your desired option:
-   - **"Auto-Sync Settings..."** - Configure sync behavior
-   - **"View Sync Status"** - See current sync statistics
+   - **"Auto-Sync Settings..."** - Configure synchronization behavior
+   - **"View Sync Status"** - Monitor current sync statistics and activity
+
+#### **Alternative Access Methods:**
+- **File Menu**: `File → Setup Automation Studio Paths...` for AS configuration
+- **File Menu**: `File → Change Project Root...` for project location
+- **File Menu**: `File → Manual Sync Now` for immediate synchronization
 
 ### 🎛️ **Auto-Sync Settings Dialog**
 
@@ -389,6 +700,72 @@ All sync operations are logged:
 3. **Verify project structure** manually
 4. **Test with simple project** to isolate issues
 
+### 📋 **Detailed Error Messages and Solutions**
+
+#### **"Source libraries directory not found"**
+- **Full Message**: "Source libraries directory not found: [path]"
+- **Meaning**: The version-specific library folder is missing from your project
+- **Cause**: Libraries_45 or Libraries_6 folder doesn't exist in your Logical directory
+- **Solutions**:
+  1. Create the missing directory (e.g., `Logical/Libraries_45`)
+  2. Copy your existing libraries to the version-specific folder
+  3. Verify folder naming is exact (Libraries_45, not Libraries45 or libraries_45)
+  4. Check that you have the correct project root selected
+
+#### **"Auto-sync failed"**
+- **Full Message**: "Auto-sync failed: [specific error]"
+- **Meaning**: The automatic synchronization process encountered an error
+- **Common Causes**:
+  - File permission issues (read-only files)
+  - Insufficient disk space
+  - Files in use by another application
+  - Network drive disconnection
+- **Solutions**:
+  1. Check file permissions (ensure files are not read-only)
+  2. Verify sufficient disk space (check both source and target locations)
+  3. Close any applications that might be using the files
+  4. Retry with `File → Manual Sync Now`
+  5. Check Session Log for specific error details
+
+#### **"Invalid project root"**
+- **Full Message**: "The selected directory does not appear to be a valid project root"
+- **Meaning**: The chosen folder doesn't have the required structure
+- **Solutions**:
+  1. Ensure the folder contains both "Logical" and "Physical" subdirectories
+  2. Check that subdirectory names are spelled correctly and match case
+  3. Verify you selected the correct parent folder (not Logical or Physical itself)
+  4. Ensure you have read permissions to the directory
+
+#### **"Automation Studio executable not found"**
+- **Full Message**: "Automation Studio executable not found: [path]"
+- **Meaning**: The configured AS executable path is invalid or inaccessible
+- **Solutions**:
+  1. Go to `File → Setup Automation Studio Paths...`
+  2. Remove the invalid entry and re-add it
+  3. Browse to the correct AutomationStudio.exe location
+  4. Verify AS installation is complete and functional
+  5. Check file permissions and path accessibility
+
+### 🔧 **Advanced Troubleshooting**
+
+#### **Application Won't Start:**
+- **Check Windows Event Viewer**: Look for application errors
+- **Verify 64-bit Windows**: Application requires 64-bit OS
+- **Run as Administrator**: Try right-click → "Run as administrator"
+- **Check User Permissions**: Ensure write access to user profile folder
+- **Reinstall**: Uninstall and reinstall the application
+
+#### **Sync Operations Are Slow:**
+- **Large Project**: Consider increasing periodic sync interval
+- **Network Drives**: Move project to local drive for better performance
+- **Antivirus**: Add application and project folders to antivirus exclusions
+- **Disk Space**: Ensure sufficient free space on all drives
+
+#### **Multiple AS Versions Interfering:**
+- **Close All AS Instances**: Don't run multiple AS versions simultaneously
+- **Check Process Monitor**: Use Task Manager to verify only one AS is running
+- **Restart Selector**: Close and reopen Selector if AS detection seems stuck
+
 ---
 
 ## Advanced Features
@@ -475,38 +852,126 @@ Advanced users can edit XML configuration directly:
 3. **Clean old logs**: Periodically clean log directories
 4. **Close unused AS**: Don't run multiple AS versions simultaneously
 
-### 💡 **Pro Tips**
+### 💡 **Pro Tips and Advanced Usage**
 
-#### **Keyboard Shortcuts**:
+#### **Keyboard Shortcuts and Quick Actions**:
 - **F5**: Refresh studio list (same as clicking "Refresh List")
-- **Enter**: Open project (when studio is selected)
-- **Escape**: Close dialogs
+- **Enter**: Open project (when studio is selected in the list)
+- **Escape**: Close any open dialog boxes
+- **Double-Click**: Select and immediately open project with chosen AS version
+- **Alt + F**: Open File menu quickly
+- **Alt + S**: Open Settings menu quickly
+- **Alt + H**: Open Help menu quickly
 
-#### **Workflow Optimization**:
-1. **Leave Selector open**: Keep it running for automatic sync
-2. **Use desktop shortcut**: Quick access to the application
-3. **Monitor session log**: Watch for sync confirmations
-4. **Regular manual sync**: Use before important work sessions
+#### **Workflow Optimization Strategies**:
 
-#### **Troubleshooting Shortcuts**:
-1. **Check session log first**: Most issues show up here
-2. **Try manual sync**: Tests if sync system is working
-3. **Restart both applications**: Often resolves temporary issues
-4. **Check file permissions**: Ensure write access to project folders
+##### **For Daily Work:**
+1. **Leave Selector Open**: Keep the application running in the background for continuous auto-sync
+2. **Use Desktop Shortcut**: Quick access without navigating Start Menu
+3. **Monitor Session Log**: Watch for sync confirmations to verify your work is protected
+4. **Regular Manual Sync**: Use `File → Manual Sync Now` before important work sessions
+5. **Pre-Select Version**: Application remembers last used AS version for faster workflow
 
-### ⚠️ **Important Warnings**
+##### **For Project Management:**
+1. **Consistent Naming**: Use clear, descriptive names for your version-specific directories
+2. **Regular Backups**: Let the backup system work (keep it enabled)
+3. **Version Testing**: Test your project in both AS versions before deployment
+4. **Documentation**: Keep notes about version-specific requirements or limitations
 
-#### **Do NOT**:
-- ❌ **Edit active files directly** (Libraries, Physical.pkg, OCB.apj)
-- ❌ **Delete version-specific directories** while AS is running
-- ❌ **Run multiple AS versions** on the same project simultaneously
-- ❌ **Disable auto-sync** unless you have a backup strategy
+##### **For Team Environments:**
+1. **Shared Projects**: Use network-accessible project roots for team collaboration
+2. **Standardized Setup**: Ensure all team members use the same AS installation paths
+3. **Regular Sync**: Encourage manual sync before committing changes to version control
+4. **Log Monitoring**: Check logs for team-wide sync issues
 
-#### **Always**:
-- ✅ **Let auto-sync complete** before switching versions
-- ✅ **Check session log** for sync confirmations
-- ✅ **Keep backups enabled** for safety
-- ✅ **Test in both versions** before deploying
+#### **Performance Optimization**:
+
+##### **For Large Projects:**
+1. **Adjust Sync Frequency**: Increase periodic sync interval to 10-15 minutes
+2. **Monitor Disk Space**: Large projects with frequent backups use more space
+3. **Clean Old Logs**: Periodically clean log directories to free space
+4. **SSD Storage**: Use solid-state drives for better file operation performance
+
+##### **For System Resources:**
+1. **Close Unused AS**: Don't run multiple AS versions simultaneously
+2. **Background Monitoring**: The application uses minimal resources when idle
+3. **Memory Usage**: Large projects may require more system RAM
+4. **CPU Impact**: Frequent sync operations use minimal CPU time
+
+#### **Troubleshooting Shortcuts and Quick Fixes**:
+
+##### **First-Level Diagnostics:**
+1. **Check Session Log First**: 90% of issues are visible in the log with clear error messages
+2. **Try Manual Sync**: `File → Manual Sync Now` tests if the sync system is working correctly
+3. **Restart Both Applications**: Close AS and Selector, then restart - resolves many temporary issues
+4. **Check File Permissions**: Ensure write access to both project folders and user directory
+
+##### **Second-Level Diagnostics:**
+1. **Review Configuration**: Verify AS paths and project root are correct
+2. **Test with Simple Project**: Use a minimal project to isolate configuration vs. project issues
+3. **Check System Resources**: Verify disk space, memory, and file handles
+4. **Examine Log Files**: Look at permanent log files for historical error patterns
+
+##### **Advanced Diagnostics:**
+1. **Process Monitoring**: Use Task Manager to verify AS processes are detected correctly
+2. **File System Check**: Ensure project folders are accessible and not corrupted
+3. **Network Issues**: If using network drives, check connectivity and permissions
+4. **Antivirus Interference**: Add application and project folders to antivirus exclusions
+
+### ⚠️ **Critical Safety Guidelines**
+
+#### **Absolute Rules - Never Do These:**
+- ❌ **Edit Active Files Directly**: Never manually modify Libraries/, Physical.pkg, or OCB.apj
+  - **Why**: These files are automatically managed and will be overwritten
+  - **Instead**: Always edit the version-specific files (Libraries_45, Libraries_6, etc.)
+
+- ❌ **Delete Version-Specific Directories While AS Is Running**: Never remove Libraries_45, Libraries_6, etc. during active sessions
+  - **Why**: Can cause sync failures and data loss
+  - **Instead**: Close AS first, then make structural changes
+
+- ❌ **Run Multiple AS Versions Simultaneously**: Don't open AS 4.5 and AS 6 at the same time on the same project
+  - **Why**: Can cause file conflicts and sync confusion
+  - **Instead**: Close one AS version before opening another
+
+- ❌ **Disable Auto-Sync Without Backup Strategy**: Don't turn off auto-sync unless you have alternative data protection
+  - **Why**: Risk of losing work when switching versions
+  - **Instead**: Keep auto-sync enabled or implement manual backup procedures
+
+#### **Always Follow These Practices:**
+- ✅ **Let Auto-Sync Complete**: Wait for sync confirmation before switching AS versions
+  - **How to Verify**: Check Session Log for "✓ Auto-sync completed" message
+
+- ✅ **Monitor Session Log**: Regularly check for sync confirmations and error messages
+  - **What to Look For**: Green checkmarks for success, red X marks for errors
+
+- ✅ **Keep Backups Enabled**: Maintain the automatic backup system for safety
+  - **Configuration**: Settings → Sync → Auto-Sync Settings → "Create backups before sync"
+
+- ✅ **Test in Both Versions**: Verify your project works in all AS versions before deployment
+  - **Process**: Test critical functionality in AS 4.5 and AS 6 separately
+
+- ✅ **Regular Configuration Checks**: Periodically verify your AS paths and project root are correct
+  - **When**: After AS updates, system changes, or moving project locations
+
+#### **Emergency Procedures:**
+
+##### **If Sync Fails:**
+1. **Don't Panic**: Your work is likely still in the active Libraries directory
+2. **Try Manual Sync**: Use `File → Manual Sync Now` to attempt immediate sync
+3. **Check Backups**: Look for backup directories with timestamps
+4. **Manual Copy**: As last resort, manually copy changed files to version-specific directories
+
+##### **If Files Are Missing:**
+1. **Check Backup Directories**: Look for folders like `Libraries_6_backup_YYYYMMDD_HHMMSS`
+2. **Check Log Files**: Review session logs for sync history and error messages
+3. **Verify Project Structure**: Ensure all required directories exist
+4. **Restore from Version Control**: If using Git/SVN, restore from repository
+
+##### **If AS Won't Start:**
+1. **Verify Project Structure**: Check that all required files exist (OCB.apj, Physical.pkg)
+2. **Check AS Installation**: Ensure AS itself is working by testing with another project
+3. **Reset Project Files**: Use the Selector to re-setup the project files
+4. **Contact Support**: If all else fails, gather log files and contact technical support
 
 ---
 

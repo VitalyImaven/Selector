@@ -107,7 +107,7 @@ class MainWindow(QMainWindow):
         """Setup the user interface."""
         self.setWindowTitle("Automation Studio Selector")
         self.setMinimumSize(800, 550)
-        self.resize(850, 600)
+        self.resize(800, 550)  # Start at minimum size
         
         # Apply styles
         self.setStyleSheet(MAIN_STYLE)
@@ -269,8 +269,8 @@ class MainWindow(QMainWindow):
         
         # Project list
         self.project_list = QListWidget()
-        self.project_list.setMinimumHeight(60)
-        self.project_list.setMaximumHeight(80)
+        self.project_list.setMinimumHeight(80)
+        self.project_list.setMaximumHeight(130)
         self.project_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.project_list.itemSelectionChanged.connect(self.on_project_selection_changed)
         layout.addWidget(self.project_list)
@@ -356,8 +356,8 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(group)
         
         self.log_display = QTextEdit()
-        self.log_display.setMaximumHeight(180)
-        self.log_display.setMinimumHeight(140)
+        self.log_display.setMaximumHeight(130)
+        self.log_display.setMinimumHeight(90)
         self.log_display.setReadOnly(True)
         layout.addWidget(self.log_display)
         
