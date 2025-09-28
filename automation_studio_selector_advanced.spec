@@ -131,7 +131,7 @@ exe = EXE(
     name=APP_NAME,
     debug=DEBUG_MODE,
     bootloader_ignore_signals=False,
-    strip=OPTIMIZE_SIZE,
+    strip=False,  # Disable strip to avoid Windows errors
     upx=UPX_COMPRESSION,
     console=CONSOLE_MODE,
     disable_windowed_traceback=not DEBUG_MODE,
@@ -151,7 +151,7 @@ coll = COLLECT(
     a.binaries,
     a.zipfiles,
     a.datas,
-    strip=OPTIMIZE_SIZE,
+    strip=False,  # Disable strip to avoid Windows errors
     upx=UPX_COMPRESSION,
     upx_exclude=[
         # Exclude these files from UPX compression (can cause issues)

@@ -51,7 +51,7 @@
    'PYSOURCE')],
  'python313.dll',
  True,
- True,
+ False,
  False,
  [],
  None,

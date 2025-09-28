@@ -1,7 +1,7 @@
 [Setup]
 ; Basic application information
 AppName=Automation Studio Selector
-AppVersion=1.1.0
+AppVersion=1.1.1
 AppPublisher=Vitaly Grosman - Indigo R&D Division
 AppContact=Vitaly Grosman
 AppCopyright=© 2025 Vitaly Grosman, Indigo R&D Division
@@ -14,7 +14,7 @@ AllowNoIcons=yes
 LicenseFile=
 InfoAfterFile=
 OutputDir=installer
-OutputBaseFilename=AutomationStudioSelector_Setup_v1.1.0
+OutputBaseFilename=AutomationStudioSelector_Setup_v1.1.1
 SetupIconFile=
 Compression=lzma
 SolidCompression=yes
