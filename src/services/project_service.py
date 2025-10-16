@@ -260,6 +260,47 @@ class ProjectService:
             self.session_logger.log_error(error_msg, e)
             raise ProjectOperationError(error_msg) from e
     
+    def prepare_project_without_launch(self, project_root: Path, studio: AutomationStudio) -> bool:
+        """
+        Prepare project files without launching Automation Studio.
+        
+        Args:
+            project_root: Root path of the project
+            studio: Automation studio configuration
+            
+        Returns:
+            True if successful
+        """
+        try:
+            logger.info(f"Preparing project for {studio.display_name} (no launch)")
+            self.session_logger.log_studio_selection(studio.name, studio.version.value)
+            
+            # Step 1: Validate project structure
+            self.validate_project_structure(project_root)
+            
+            # Step 2: Clear Libraries directory
+            self.clear_libraries_directory(project_root)
+            
+            # Step 3: Copy version-specific libraries
+            self.copy_libraries_for_version(project_root, studio)
+            
+            # Step 4: Update Physical.pkg
+            self.update_physical_pkg(project_root, studio)
+            
+            # Step 5: Update project file (OCB.apj)
+            self.update_project_file(project_root, studio)
+            
+            logger.info(f"Project prepared successfully for {studio.display_name}")
+            self.session_logger.log_project_operation("Project prepared successfully (no launch)")
+            
+            return True
+            
+        except Exception as e:
+            error_msg = f"Project preparation failed: {e}"
+            logger.error(error_msg)
+            self.session_logger.log_error(error_msg, e)
+            return False
+    
     def execute_full_project_setup(self, project_root: Path, studio: AutomationStudio) -> bool:
         """
         Execute the complete project setup process for the selected studio.

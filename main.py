@@ -38,20 +38,42 @@ def setup_application_logging():
         return False
 
 
-def main():
-    """Main application entry point."""
+def run_cli_mode():
+    """Run application in CLI mode."""
     try:
-        # Setup logging first
+        # Setup logging for CLI
         if not setup_application_logging():
-            sys.exit(1)
+            return 1
         
         logger = logging.getLogger("automation_selector")
-        logger.info("Starting Automation Studio Selector")
+        logger.info("Starting Automation Studio Selector in CLI mode")
+        
+        # Import CLI controller
+        from src.cli.cli_controller import CLIController
+        
+        # Create controller and execute
+        controller = CLIController()
+        exit_code = controller.execute(sys.argv[1:])
+        
+        logger.info(f"CLI mode exited with code: {exit_code}")
+        return exit_code
+        
+    except Exception as e:
+        print(f"CRITICAL ERROR: {e}", file=sys.stderr)
+        logger.critical(f"CLI mode error: {e}", exc_info=True)
+        return 1
+
+
+def run_gui_mode():
+    """Run application in GUI mode."""
+    try:
+        logger = logging.getLogger("automation_selector")
+        logger.info("Starting Automation Studio Selector in GUI mode")
         
         # Create QApplication
         app = QApplication(sys.argv)
         app.setApplicationName("Automation Studio Selector")
-        app.setApplicationVersion("1.0.0")
+        app.setApplicationVersion("1.1.0")
         app.setOrganizationName("Automation Tools")
         
         # Set application properties (High DPI scaling is enabled by default in PyQt6)
@@ -69,6 +91,45 @@ def main():
         logger.info(f"Application exited with code: {exit_code}")
         
         return exit_code
+        
+    except Exception as e:
+        error_msg = f"Critical error starting GUI: {e}"
+        print(error_msg)
+        
+        try:
+            logger = logging.getLogger("automation_selector")
+            logger.critical(error_msg, exc_info=True)
+        except:
+            pass
+        
+        # Try to show error dialog if possible
+        try:
+            if 'app' in locals():
+                QMessageBox.critical(
+                    None,
+                    "Critical Error",
+                    f"Failed to start Automation Studio Selector:\n\n{str(e)}"
+                )
+        except:
+            pass
+        
+        return 1
+
+
+def main():
+    """Main application entry point."""
+    try:
+        # Setup logging first
+        if not setup_application_logging():
+            sys.exit(1)
+        
+        # Check if we have command-line arguments (CLI mode)
+        if len(sys.argv) > 1:
+            # CLI mode
+            return run_cli_mode()
+        else:
+            # GUI mode (no arguments)
+            return run_gui_mode()
         
     except Exception as e:
         error_msg = f"Critical error starting application: {e}"
