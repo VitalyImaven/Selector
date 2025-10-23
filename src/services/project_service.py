@@ -208,7 +208,17 @@ class ProjectService:
             # Copy version-specific file to OCB.apj
             shutil.copy2(source_file, target_file)
             
-            logger.info(f"Project file updated from {source_file}")
+            # Verify the copy was successful
+            if not target_file.exists():
+                raise ProjectOperationError(f"Failed to create target file: {target_file}")
+            
+            # Verify file size matches
+            source_size = source_file.stat().st_size
+            target_size = target_file.stat().st_size
+            if source_size != target_size:
+                raise ProjectOperationError(f"File size mismatch after copy: source={source_size}, target={target_size}")
+            
+            logger.info(f"Project file updated from {source_file} (size: {source_size} bytes)")
             self.session_logger.log_file_operation("File copied", str(source_file), str(target_file))
             self.session_logger.log_project_operation(
                 f"Project file updated for {studio.display_name}"

@@ -44,30 +44,49 @@ class CLIParser:
             if not args:
                 return None, None
             
-            # First argument should be the command
-            command = args[0].lstrip('-').lower()
+            # Check if first arg is a known command or a flag
+            first_arg = args[0].lstrip('-').lower()
+            
+            # If first argument starts with '-', assume it's the 'open' command with flags
+            if args[0].startswith('-'):
+                # Flags without explicit command = assume 'open' command
+                return 'open', self.parse_open_command(args)
             
             # Check if it's a valid command
-            if command in self.commands:
-                parser_func = self.commands[command]
+            if first_arg in self.commands:
+                parser_func = self.commands[first_arg]
                 options = parser_func(args[1:])
-                return command, options
+                return first_arg, options
             else:
                 # Try to parse as shorthand: ProjectName AS6
                 if len(args) >= 2 and not args[0].startswith('-'):
                     # Shorthand for: open ProjectName -studio AS6
                     return 'open', {
                         'project': args[0],
-                        'studio': args[1].upper()
+                        'studio': args[1].upper(),
+                        'prepare_only': False,
+                        'wait': False,
+                        'silent': False,
+                        'verbose': False,
+                        'project_path': None,
+                        'studio_path': None,
+                        'as_version': None,
                     }
                 elif len(args) == 1 and not args[0].startswith('-'):
                     # Shorthand for: open ProjectName (use last studio)
                     return 'open', {
                         'project': args[0],
-                        'studio': None
+                        'studio': None,
+                        'prepare_only': False,
+                        'wait': False,
+                        'silent': False,
+                        'verbose': False,
+                        'project_path': None,
+                        'studio_path': None,
+                        'as_version': None,
                     }
                 
-                logger.error(f"Unknown command: {command}")
+                logger.error(f"Unknown command: {first_arg}")
                 return None, None
                 
         except Exception as e:
@@ -78,13 +97,14 @@ class CLIParser:
         """Parse open command arguments."""
         options = {
             'project': None,
-            'project_path': None,  # New: direct path support
+            'project_path': None,  # Direct path to project
             'studio': None,
-            'studio_path': None,   # New: direct AS executable path
+            'studio_path': None,   # Direct path to AS executable
+            'as_version': None,    # AS version (45 or 6) - required for direct paths
             'wait': False,
             'silent': False,
             'verbose': False,
-            'prepare_only': False,  # New: prepare files but don't launch AS
+            'prepare_only': False,  # Prepare files but don't launch AS
         }
         
         i = 0
@@ -109,9 +129,17 @@ class CLIParser:
                     i += 2
                 else:
                     i += 1
-            elif arg in ['studio-path', 'as-path']:
+            elif arg in ['studio-path', 'as-path', 'exe-path']:
                 if i + 1 < len(args):
                     options['studio_path'] = args[i + 1]
+                    i += 2
+                else:
+                    i += 1
+            elif arg in ['as-version', 'version', 'v']:
+                if i + 1 < len(args):
+                    # Normalize version: 45, 4.5, AS45 all become "45"
+                    version = args[i + 1].upper().replace('AS', '').replace('.', '').strip()
+                    options['as_version'] = version
                     i += 2
                 else:
                     i += 1

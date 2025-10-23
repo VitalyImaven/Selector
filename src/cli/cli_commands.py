@@ -64,24 +64,29 @@ class CLICommands:
                 return 1
             
             # Determine studio (from version or direct path)
+            as_version = options.get('as_version')
+            
             if studio_path_str:
-                # Direct AS executable path provided - no GUI configuration needed!
+                # Direct AS executable path provided - Jenkins/QA scenario
                 studio_exe = Path(studio_path_str)
                 if not studio_exe.exists():
                     self._print_error(f"AS executable not found: {studio_path_str}", silent)
                     return 4
                 
-                # Determine version from path or default
-                if 'AS6' in str(studio_exe).upper() or '\\6\\' in str(studio_exe):
-                    studio = AutomationStudio.create_as6(studio_exe)
-                elif 'AS45' in str(studio_exe).upper() or '45' in str(studio_exe):
+                # MUST specify AS version when using direct path
+                if not as_version:
+                    self._print_error("When using -studio-path, you MUST also specify -as-version (45 or 6)", silent)
+                    self._print_error("Example: -studio-path 'C:\\AS45\\AutomationStudio.exe' -as-version 45", silent)
+                    return 4
+                
+                # Create studio object based on version
+                if as_version == '45':
                     studio = AutomationStudio.create_as45(studio_exe)
+                elif as_version == '6':
+                    studio = AutomationStudio.create_as6(studio_exe)
                 else:
-                    # Default to version from -studio parameter or AS 6
-                    if studio_version and '4.5' in studio_version or '45' in studio_version:
-                        studio = AutomationStudio.create_as45(studio_exe)
-                    else:
-                        studio = AutomationStudio.create_as6(studio_exe)
+                    self._print_error(f"Invalid AS version: {as_version}. Use 45 or 6", silent)
+                    return 4
                         
             elif studio_version:
                 # Studio version provided - lookup in configuration
@@ -107,9 +112,14 @@ class CLICommands:
             
             if verbose and not silent:
                 action = "Preparing" if prepare_only else "Opening"
-                print(f"{action} project: {project_name}")
+                print(f"{action} project: {project_path.name}")
                 print(f"Using AS: {studio.display_name}")
                 print(f"Project path: {project_path}")
+            
+            # Show progress in console for CLI mode
+            if not silent:
+                print("Starting project setup...")
+                print("[1/5] Validating project structure...")
             
             # Note: Auto-sync is not available in CLI mode (requires Qt)
             # Files will still be prepared correctly
@@ -117,17 +127,43 @@ class CLICommands:
             # Execute setup based on mode
             if prepare_only:
                 # Prepare files only, don't launch AS
-                success = self.project_service.prepare_project_without_launch(project_path, studio)
-                
-                if not success:
-                    self._print_error("Failed to prepare project", silent)
+                try:
+                    if not silent:
+                        print("[2/5] Clearing Libraries directory...")
+                    self.project_service.clear_libraries_directory(project_path)
+                    
+                    if not silent:
+                        print("[3/5] Copying version-specific libraries...")
+                    self.project_service.copy_libraries_for_version(project_path, studio)
+                    
+                    if not silent:
+                        print("[4/5] Updating Physical.pkg file...")
+                    self.project_service.update_physical_pkg(project_path, studio)
+                    
+                    if not silent:
+                        print("[5/5] Updating project file...")
+                    self.project_service.update_project_file(project_path, studio)
+                    
+                    if not silent:
+                        print("")
+                        print(f"[OK] Project prepared successfully for {studio.display_name}")
+                        print(f"")
+                        print(f"  Files Updated:")
+                        print(f"  [OK] Libraries/      <- Copied from Libraries_{studio.libraries_suffix}/")
+                        print(f"  [OK] Physical.pkg    <- Copied from Physical_{studio.physical_pkg_suffix}.pkg")
+                        print(f"  [OK] OCB.apj         <- Copied from OCB_as{studio.project_file_suffix}.apj")
+                        print(f"")
+                        print(f"  Project Location: {project_path}")
+                        print(f"  [INFO] Automation Studio NOT launched (prepare-only mode)")
+                        if verbose:
+                            print(f"")
+                            print(f"  Next Steps:")
+                            print(f"  -> Double-click: {project_path / 'OCB.apj'}")
+                            print(f"  -> Or manually launch AS with the project file")
+                    
+                except Exception as e:
+                    self._print_error(f"Failed to prepare project: {e}", silent)
                     return 1
-                
-                if not silent:
-                    print(f"✓ Project prepared successfully for {studio.display_name}")
-                    print(f"  Files configured but Automation Studio NOT launched")
-                    if verbose:
-                        print(f"  You can now manually open: {project_path / 'OCB.apj'}")
             else:
                 # Full setup with AS launch
                 success = self.project_service.execute_full_project_setup(project_path, studio)
@@ -137,7 +173,7 @@ class CLICommands:
                     return 1
                 
                 if not silent:
-                    print(f"✓ Project opened successfully with {studio.display_name}")
+                    print(f"[OK] Project opened successfully with {studio.display_name}")
                 
                 # Wait for AS to close if requested
                 if wait:
@@ -239,9 +275,9 @@ class CLICommands:
             
             if not silent:
                 if files_synced > 0:
-                    print(f"✓ Sync completed: {files_synced} files synchronized")
+                    print(f"[OK] Sync completed: {files_synced} files synchronized")
                 else:
-                    print("✓ No changes detected - all files up to date")
+                    print("[OK] No changes detected - all files up to date")
             
             return 0
             
@@ -273,8 +309,8 @@ class CLICommands:
             
             # Add to configuration
             if self.config_manager.add_project_path(name, project_path, description):
-                print(f"✓ Project added: {name}")
-                print(f"  Path: {project_path}")
+                print(f"[OK] Project added: {name}")
+                print(f"     Path: {project_path}")
                 return 0
             else:
                 self._print_error("Failed to add project (may already exist)")
@@ -309,7 +345,7 @@ class CLICommands:
             
             # Remove from configuration
             if self.config_manager.remove_project_path(project_path):
-                print(f"✓ Project removed: {name}")
+                print(f"[OK] Project removed: {name}")
                 return 0
             else:
                 self._print_error("Failed to remove project")
