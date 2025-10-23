@@ -7,7 +7,7 @@ from typing import Optional, List
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QListWidget, QListWidgetItem, QFileDialog, QMessageBox,
-    QGroupBox, QLineEdit
+    QGroupBox, QLineEdit, QFrame
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QIcon
@@ -52,7 +52,7 @@ class SetupDialog(QDialog):
         layout.addWidget(title)
         
         # Subtitle
-        subtitle = QLabel("Configure automation studio executable paths and working project root directory")
+        subtitle = QLabel("Configure the paths to your Automation Studio executable files")
         subtitle.setObjectName("subtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(subtitle)
@@ -60,8 +60,8 @@ class SetupDialog(QDialog):
         # Studio configuration group
         self.setup_studio_group(layout)
         
-        # Project root configuration group
-        self.setup_project_group(layout)
+        # Note about projects
+        self.setup_project_note(layout)
         
         # Buttons
         self.setup_buttons(layout)
@@ -107,37 +107,44 @@ class SetupDialog(QDialog):
         
         parent_layout.addWidget(group)
     
-    def setup_project_group(self, parent_layout):
-        """Setup the project root configuration group."""
-        group = QGroupBox("Project Root Directory")
-        layout = QVBoxLayout(group)
+    def setup_project_note(self, parent_layout):
+        """Setup the project configuration note."""
+        note_frame = QFrame()
+        note_frame.setStyleSheet("""
+            QFrame {
+                background-color: #e8f6f3;
+                border-left: 4px solid #16a085;
+                border-radius: 4px;
+                padding: 12px;
+                margin: 10px 0px;
+            }
+        """)
+        note_layout = QVBoxLayout(note_frame)
         
-        # Instructions
-        instructions = QLabel(
-            "Select the root directory of your project (should contain Logical and Physical folders)"
+        note_title = QLabel("📁 Adding Projects")
+        note_title.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: #2c3e50;
+                margin-bottom: 5px;
+            }
+        """)
+        note_layout.addWidget(note_title)
+        
+        note_text = QLabel(
+            "After completing this setup, you can add your projects using the 'Add Project...' button in the main application window."
         )
-        instructions.setWordWrap(True)
-        layout.addWidget(instructions)
+        note_text.setWordWrap(True)
+        note_text.setStyleSheet("""
+            QLabel {
+                font-size: 13px;
+                color: #34495e;
+            }
+        """)
+        note_layout.addWidget(note_text)
         
-        # Path selection
-        path_layout = QHBoxLayout()
-        
-        self.project_path_edit = QLineEdit()
-        self.project_path_edit.setReadOnly(True)
-        self.project_path_edit.setPlaceholderText("No project root selected...")
-        path_layout.addWidget(self.project_path_edit)
-        
-        self.browse_project_btn = QPushButton("Browse...")
-        self.browse_project_btn.clicked.connect(self.browse_project_root)
-        path_layout.addWidget(self.browse_project_btn)
-        
-        layout.addLayout(path_layout)
-        parent_layout.addWidget(group)
-        
-        # Load existing project root
-        existing_root = self.config_manager.get_project_root()
-        if existing_root and existing_root.exists():
-            self.project_path_edit.setText(str(existing_root))
+        parent_layout.addWidget(note_frame)
     
     def setup_buttons(self, parent_layout):
         """Setup dialog buttons."""
@@ -246,27 +253,6 @@ class SetupDialog(QDialog):
                 f"Failed to remove studio configuration:\n{str(e)}"
             )
     
-    def browse_project_root(self):
-        """Browse for project root directory."""
-        try:
-            dialog = QFileDialog(self)
-            dialog.setWindowTitle("Select Project Root Directory")
-            dialog.setFileMode(QFileDialog.FileMode.Directory)
-            
-            if dialog.exec() == QFileDialog.DialogCode.Accepted:
-                selected_dirs = dialog.selectedFiles()
-                if selected_dirs:
-                    project_root = Path(selected_dirs[0])
-                    self.project_path_edit.setText(str(project_root))
-                    logger.info(f"Project root selected: {project_root}")
-                    
-        except Exception as e:
-            logger.error(f"Error browsing project root: {e}")
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to select project root:\n{str(e)}"
-            )
     
     def update_studio_list(self):
         """Update the studio list widget."""
@@ -291,25 +277,8 @@ class SetupDialog(QDialog):
                 QMessageBox.warning(
                     self,
                     "Configuration Incomplete",
-                    "Please add at least one Automation Studio installation."
-                )
-                return
-            
-            project_root_text = self.project_path_edit.text().strip()
-            if not project_root_text:
-                QMessageBox.warning(
-                    self,
-                    "Configuration Incomplete", 
-                    "Please select a project root directory."
-                )
-                return
-            
-            project_root = Path(project_root_text)
-            if not project_root.exists():
-                QMessageBox.warning(
-                    self,
-                    "Invalid Path",
-                    "The selected project root directory does not exist."
+                    "Please add at least one Automation Studio installation.\n\n"
+                    "You can add projects later in the main window."
                 )
                 return
             
@@ -317,10 +286,6 @@ class SetupDialog(QDialog):
             for studio in self.configured_studios:
                 if not self.config_manager.add_automation_studio(studio):
                     raise Exception(f"Failed to save {studio.display_name}")
-            
-            # Save project root
-            if not self.config_manager.set_project_root(project_root):
-                raise Exception("Failed to save project root")
             
             logger.info("Configuration saved successfully")
             self.studios_configured.emit()

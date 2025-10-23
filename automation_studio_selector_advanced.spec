@@ -68,6 +68,8 @@ block_cipher = None
 # Data files configuration
 data_files = [
     ('assets/logo.png', 'assets'),
+    ('assets/Star Wars- The Imperial March .mp3', 'assets'),
+    ('assets/VALHALLA CALLING.mp4', 'assets'),
     ('auto_sync_config_example.xml', '.'),
 ] + EXTRA_DATA_FILES
 
@@ -76,6 +78,7 @@ hidden_imports = [
     'PyQt6.QtCore',
     'PyQt6.QtGui', 
     'PyQt6.QtWidgets',
+    'PyQt6.QtMultimedia',
     'psutil',
     'pydantic',
     'pydantic_settings',

@@ -8,10 +8,10 @@ from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QWidget, QMessageBox, QProgressBar,
     QTextEdit, QGroupBox, QStatusBar, QMenuBar, QMenu, QLineEdit, QFileDialog,
-    QSizePolicy, QInputDialog
+    QSizePolicy, QInputDialog, QDialog
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QAction, QFont, QIcon, QPixmap
+from PyQt6.QtGui import QAction, QFont, QIcon, QPixmap, QKeySequence, QShortcut
 
 from src.models.automation_studio import AutomationStudio
 from src.config.settings import ConfigManager
@@ -22,6 +22,7 @@ from src.ui.styles import MAIN_STYLE
 from src.ui.setup_dialog import SetupDialog
 from src.ui.sync_settings_dialog import SyncSettingsDialog
 from src.ui.help_dialog import HelpDialog
+from src.ui.admin_panel import PasswordDialog, AdminPanel
 
 
 logger = logging.getLogger(__name__)
@@ -102,12 +103,13 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self.load_configuration()
         self.setup_auto_sync()
+        self.setup_secret_shortcuts()
         
     def setup_ui(self):
         """Setup the user interface."""
         self.setWindowTitle("Automation Studio Selector")
         self.setMinimumSize(800, 550)
-        self.resize(800, 550)  # Start at minimum size
+        self.resize(800, 920)  # Start at optimal size
         
         # Apply styles
         self.setStyleSheet(MAIN_STYLE)
@@ -203,10 +205,6 @@ class MainWindow(QMainWindow):
         setup_action = QAction("Setup Automation Studio Paths...", self)
         setup_action.triggered.connect(self.show_setup_dialog)
         file_menu.addAction(setup_action)
-        
-        change_project_action = QAction("Change Project Root...", self)
-        change_project_action.triggered.connect(self.browse_project_root)
-        file_menu.addAction(change_project_action)
         
         file_menu.addSeparator()
         
@@ -427,6 +425,57 @@ class MainWindow(QMainWindow):
         except Exception as e:
             logger.error(f"Error setting up auto-sync: {e}")
             self.log_message(f"Error setting up auto-sync: {e}")
+    
+    def setup_secret_shortcuts(self):
+        """Setup secret keyboard shortcuts."""
+        try:
+            # Secret admin panel: Ctrl+Alt+Shift+P
+            admin_shortcut = QShortcut(QKeySequence("Ctrl+Alt+Shift+P"), self)
+            admin_shortcut.activated.connect(self.show_secret_admin_panel)
+            logger.info("Secret shortcuts initialized")
+        except Exception as e:
+            logger.error(f"Error setting up secret shortcuts: {e}")
+    
+    def show_secret_admin_panel(self):
+        """Show the secret admin panel (after password check)."""
+        try:
+            # Show password dialog first
+            password_dialog = PasswordDialog(self)
+            if password_dialog.exec() == QDialog.DialogCode.Accepted and password_dialog.password_correct:
+                # Password correct - show admin panel
+                logger.info("Admin panel accessed successfully")
+                # Pass the valhalla player to admin panel so it can stop the music
+                admin_panel = AdminPanel(self.config_manager, password_dialog.valhalla_player, self)
+                admin_panel.config_cleared.connect(self.on_admin_config_cleared)
+                admin_panel.exec()
+            
+        except Exception as e:
+            logger.error(f"Error showing admin panel: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to show admin panel:\n{str(e)}"
+            )
+    
+    def on_admin_config_cleared(self):
+        """Handle configuration cleanup from admin panel."""
+        try:
+            self.log_message("Configuration cleared via admin panel - reloading...")
+            
+            # Reload configuration
+            self.load_configuration()
+            
+            QMessageBox.information(
+                self,
+                "Configuration Cleared",
+                "Configuration has been cleared.\n\n"
+                "The application will now reload with default settings.\n"
+                "You may need to reconfigure your Automation Studios and projects."
+            )
+            
+        except Exception as e:
+            logger.error(f"Error handling admin config clear: {e}")
+            self.log_message(f"Error handling admin config clear: {e}")
     
     def show_setup_dialog(self):
         """Show the setup dialog."""

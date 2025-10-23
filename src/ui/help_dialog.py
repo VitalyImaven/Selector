@@ -29,7 +29,7 @@ class HelpDialog(QDialog):
         """Setup the user interface."""
         self.setWindowTitle("How To Use - Automation Studio Selector")
         self.setModal(True)
-        self.resize(900, 700)
+        self.resize(800, 920)
         
         # Apply styles
         self.setStyleSheet(MAIN_STYLE)
@@ -61,14 +61,17 @@ class HelpDialog(QDialog):
         header_frame.setStyleSheet("""
             QFrame {
                 background-color: #34495e;
-                border-radius: 8px;
-                padding: 15px;
-                margin-bottom: 10px;
+                border-radius: 0px;
+                padding: 5px 10px;
+                margin: 0px;
+                max-height: 35px;
             }
         """)
         header_layout = QHBoxLayout(header_frame)
+        header_layout.setContentsMargins(5, 2, 5, 2)
+        header_layout.setSpacing(8)
         
-        # Logo (if available)
+        # Small logo
         try:
             import sys
             import os
@@ -86,37 +89,24 @@ class HelpDialog(QDialog):
             logo = QLabel()
             pixmap = QPixmap(logo_path)
             if not pixmap.isNull():
-                scaled_pixmap = pixmap.scaled(48, 48, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                scaled_pixmap = pixmap.scaled(24, 24, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 logo.setPixmap(scaled_pixmap)
                 header_layout.addWidget(logo)
         except:
             pass
         
-        # Title and subtitle
-        title_layout = QVBoxLayout()
-        
-        title = QLabel("How To Use Automation Studio Selector")
+        # Minimal title
+        title = QLabel("Help & Documentation")
         title.setStyleSheet("""
             QLabel {
                 color: white;
-                font-size: 20px;
+                font-size: 14px;
                 font-weight: bold;
                 margin: 0px;
+                padding: 0px;
             }
         """)
-        title_layout.addWidget(title)
-        
-        subtitle = QLabel("Interactive guide to help you master the application")
-        subtitle.setStyleSheet("""
-            QLabel {
-                color: #bdc3c7;
-                font-size: 14px;
-                margin: 0px;
-            }
-        """)
-        title_layout.addWidget(subtitle)
-        
-        header_layout.addLayout(title_layout)
+        header_layout.addWidget(title)
         header_layout.addStretch()
         
         parent_layout.addWidget(header_frame)
@@ -235,6 +225,20 @@ class HelpDialog(QDialog):
         QTreeWidgetItem(tips, ["Safety Guidelines"])
         QTreeWidgetItem(tips, ["Performance Tips"])
         
+        # CLI section
+        cli_section = QTreeWidgetItem(self.tree, ["🖥️ Command Line (CLI)"])
+        QTreeWidgetItem(cli_section, ["CLI Overview"])
+        QTreeWidgetItem(cli_section, ["Basic CLI Commands"])
+        QTreeWidgetItem(cli_section, ["Prepare-Only Mode"])
+        QTreeWidgetItem(cli_section, ["Jenkins & CI/CD"])
+        QTreeWidgetItem(cli_section, ["CLI Examples"])
+        
+        # Advanced section
+        advanced = QTreeWidgetItem(self.tree, ["🔧 Advanced Topics"])
+        QTreeWidgetItem(advanced, ["What Happens Step-by-Step"])
+        QTreeWidgetItem(advanced, ["File Operations Explained"])
+        QTreeWidgetItem(advanced, ["Multiple Projects"])
+        
         # Expand all sections
         self.tree.expandAll()
         
@@ -276,6 +280,14 @@ class HelpDialog(QDialog):
             "Workflow Optimization": self.get_workflow_optimization_content(),
             "Safety Guidelines": self.get_safety_guidelines_content(),
             "Performance Tips": self.get_performance_tips_content(),
+            "CLI Overview": self.get_cli_overview_content(),
+            "Basic CLI Commands": self.get_cli_commands_content(),
+            "Prepare-Only Mode": self.get_prepare_only_content(),
+            "Jenkins & CI/CD": self.get_jenkins_content(),
+            "CLI Examples": self.get_cli_examples_content(),
+            "What Happens Step-by-Step": self.get_step_by_step_content(),
+            "File Operations Explained": self.get_file_operations_content(),
+            "Multiple Projects": self.get_multiple_projects_content(),
         }
         
         return content_map.get(topic, self.get_default_content())
@@ -907,4 +919,472 @@ class HelpDialog(QDialog):
             <li>Remove unnecessary files from version-specific directories</li>
             <li>Use descriptive naming for project versions</li>
         </ul>
+        """
+    
+    def get_cli_overview_content(self):
+        """Content for CLI overview."""
+        return """
+        <h2>🖥️ Command Line Interface Overview</h2>
+        
+        <p>The Automation Studio Selector can be controlled entirely from the command line, perfect for:</p>
+        <ul>
+            <li><strong>Automation</strong>: Batch processing and scheduled tasks</li>
+            <li><strong>Jenkins/CI-CD</strong>: Integration with build pipelines</li>
+            <li><strong>Scripting</strong>: Custom workflows and automation</li>
+            <li><strong>Remote Operations</strong>: Configure projects without GUI</li>
+        </ul>
+        
+        <h3>Two Operating Modes:</h3>
+        
+        <h4>1. GUI Mode (No Arguments):</h4>
+        <pre>AutomationStudioSelector.exe</pre>
+        <p>Opens the graphical interface you're using right now.</p>
+        
+        <h4>2. CLI Mode (With Arguments):</h4>
+        <pre>python main.py -project-path "C:\\Projects\\MyProject" -studio-path "C:\\AS45\\exe" -as-version 45 -prepare-only</pre>
+        <p>Executes commands and exits - perfect for automation.</p>
+        
+        <h3>Key Benefits:</h3>
+        <ul>
+            <li><strong>No GUI Required</strong>: Works on build servers without desktop</li>
+            <li><strong>Scriptable</strong>: Easy to integrate with existing workflows</li>
+            <li><strong>Fast</strong>: Direct execution without UI overhead</li>
+            <li><strong>Logged</strong>: All operations logged to files</li>
+        </ul>
+        
+        <div style="background-color: #e8f6f3; padding: 15px; border-left: 4px solid #16a085; margin: 15px 0;">
+            <strong>Note:</strong> See other CLI topics in this help system for detailed commands and examples.
+        </div>
+        """
+    
+    def get_cli_commands_content(self):
+        """Content for basic CLI commands."""
+        return """
+        <h2>📋 Basic CLI Commands</h2>
+        
+        <h3>Information Commands:</h3>
+        <pre>
+python main.py -list-projects      List all configured projects
+python main.py -list-studios       List all configured AS versions
+python main.py -status             Show application status
+python main.py -version            Show version information
+python main.py -help               Show help message
+        </pre>
+        
+        <h3>Project Operations (With GUI Configuration):</h3>
+        <pre>
+python main.py OCB AS45            Open OCB project with AS 4.5
+python main.py MyProject AS6       Open project with AS 6
+        </pre>
+        
+        <h3>Direct Path Mode (No GUI Configuration Needed):</h3>
+        <pre>
+python main.py ^
+  -project-path "C:\\Path\\To\\Project" ^
+  -studio-path "C:\\AS45\\AutomationStudio.exe" ^
+  -as-version 45 ^
+  -prepare-only
+        </pre>
+        
+        <h3>Common Options:</h3>
+        <ul>
+            <li><strong>-prepare-only</strong>: Configure files but don't launch AS</li>
+            <li><strong>-silent</strong>: No console output (automation mode)</li>
+            <li><strong>-verbose</strong>: Detailed output (debugging)</li>
+            <li><strong>-wait</strong>: Wait for AS to close before exiting</li>
+        </ul>
+        
+        <h3>Examples:</h3>
+        <pre>
+REM List all projects
+python main.py -list-projects
+
+REM Prepare project without launching AS
+python main.py OCB AS45 -prepare-only
+
+REM Full Jenkins command (no GUI config needed)
+python main.py -project-path "%WORKSPACE%" -studio-path "C:\\AS45\\exe" -as-version 45 -prepare-only -silent
+        </pre>
+        """
+    
+    def get_prepare_only_content(self):
+        """Content for prepare-only mode."""
+        return """
+        <h2>🎯 Prepare-Only Mode</h2>
+        
+        <p>The <code>-prepare-only</code> flag configures all project files WITHOUT launching Automation Studio.</p>
+        
+        <h3>What It Does:</h3>
+        <ol>
+            <li>[OK] Validates project structure</li>
+            <li>[OK] Clears Libraries directory</li>
+            <li>[OK] Copies version-specific libraries</li>
+            <li>[OK] Updates Physical.pkg</li>
+            <li>[OK] Updates OCB.apj</li>
+            <li>[SKIP] Does NOT launch Automation Studio</li>
+        </ol>
+        
+        <h3>Perfect For:</h3>
+        <ul>
+            <li><strong>Jenkins/CI builds</strong>: Configure projects on build servers</li>
+            <li><strong>Batch processing</strong>: Prepare multiple projects quickly</li>
+            <li><strong>Pre-configuration</strong>: Set up before manual opening</li>
+            <li><strong>Automated testing</strong>: Configure for test environments</li>
+            <li><strong>Remote servers</strong>: No desktop GUI available</li>
+        </ul>
+        
+        <h3>Usage:</h3>
+        <pre>
+REM Simple form
+python main.py MyProject AS45 -prepare-only
+
+REM Jenkins form (no GUI config)
+python main.py -project-path "C:\\Jenkins\\workspace\\Build" -studio-path "C:\\AS45\\exe" -as-version 45 -prepare-only -silent
+        </pre>
+        
+        <h3>After Preparation:</h3>
+        <p>The project is ready to be opened:</p>
+        <ul>
+            <li>Double-click OCB.apj in Windows Explorer</li>
+            <li>Or launch AS manually with the project file</li>
+            <li>All files are configured correctly</li>
+        </ul>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 15px 0;">
+            <strong>Important:</strong> Prepare-only does all file operations but stops before launching AS.
+        </div>
+        """
+    
+    def get_jenkins_content(self):
+        """Content for Jenkins & CI/CD."""
+        return """
+        <h2>🏭 Jenkins & CI/CD Integration</h2>
+        
+        <p>The Automation Studio Selector is fully compatible with CI/CD pipelines like Jenkins, with NO GUI configuration required.</p>
+        
+        <h3>The Jenkins Command:</h3>
+        <pre>
+python main.py ^
+  -project-path "%WORKSPACE%" ^
+  -studio-path "C:\\BrAutomation\\AS45\\Bin-en\\AutomationStudio.exe" ^
+  -as-version 45 ^
+  -prepare-only ^
+  -silent
+        </pre>
+        
+        <h3>Critical Parameters:</h3>
+        <table style="width:100%; border-collapse: collapse;">
+            <tr style="background-color: #f8f9fa;">
+                <th style="padding: 8px; border: 1px solid #ddd;">Parameter</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Description</th>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><code>-project-path</code></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">Full path where Git cloned your project</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><code>-studio-path</code></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">Full path to AutomationStudio.exe</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><code>-as-version</code></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">45 or 6 (which files to copy)</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><code>-prepare-only</code></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">Don't launch AS (just prepare files)</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><code>-silent</code></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">No console output (clean logs)</td>
+            </tr>
+        </table>
+        
+        <h3>Complete Jenkins Workflow:</h3>
+        <pre>
+@echo off
+REM Jenkins Build Script
+
+echo Step 1: Git pull (done by Jenkins)
+echo Project at: %WORKSPACE%
+
+echo Step 2: Configure for AS
+python main.py -project-path "%WORKSPACE%" -studio-path "C:\\AS45\\exe" -as-version 45 -prepare-only -silent
+
+if %errorlevel% equ 0 (
+    echo [OK] Project configured
+    REM Step 3: Your build commands here
+) else (
+    echo [ERROR] Configuration failed
+    exit /b 1
+)
+        </pre>
+        
+        <h3>Why This Works Without GUI:</h3>
+        <ul>
+            <li>Uses direct paths - no project name lookup needed</li>
+            <li>Specifies AS version explicitly - no config lookup needed</li>
+            <li>Self-contained - everything in the command</li>
+            <li>Portable - same script works on any build server</li>
+        </ul>
+        
+        <div style="background-color: #e8f6f3; padding: 15px; border-left: 4px solid #16a085; margin: 15px 0;">
+            <strong>Pro Tip:</strong> For detailed Jenkins examples and troubleshooting, see JENKINS_QA_GUIDE.md in your installation directory.
+        </div>
+        """
+    
+    def get_cli_examples_content(self):
+        """Content for CLI examples."""
+        return """
+        <h2>📝 CLI Examples</h2>
+        
+        <h3>Example 1: Quick Project Preparation</h3>
+        <pre>
+REM Prepare OCB project for AS 4.5
+python main.py -project-path "C:\\Projects\\OCB" -studio-path "C:\\AS45\\exe" -as-version 45 -prepare-only
+        </pre>
+        
+        <h3>Example 2: Batch Prepare Multiple Projects</h3>
+        <pre>
+@echo off
+for %%P in (Project1 Project2 Project3) do (
+    echo Preparing %%P...
+    python main.py -project-path "C:\\Projects\\%%P" -studio-path "C:\\AS45\\exe" -as-version 45 -prepare-only -silent
+)
+echo All projects prepared!
+        </pre>
+        
+        <h3>Example 3: Open and Wait</h3>
+        <pre>
+REM Open project, wait for user to close AS, then exit
+python main.py OCB AS45 -wait
+        </pre>
+        
+        <h3>Example 4: Jenkins Parameterized Build</h3>
+        <pre>
+@echo off
+REM Use Jenkins parameter: AS_VERSION (45 or 6)
+
+if "%AS_VERSION%"=="45" (
+    set AS_EXE=C:\\AS45\\AutomationStudio.exe
+) else (
+    set AS_EXE=C:\\AS6\\AutomationStudio.exe
+)
+
+python main.py -project-path "%WORKSPACE%" -studio-path "%AS_EXE%" -as-version %AS_VERSION% -prepare-only -silent
+        </pre>
+        
+        <h3>Example 5: Git Clone and Configure</h3>
+        <pre>
+@echo off
+REM Complete workflow from Git to ready project
+
+cd C:\\Temp
+git clone https://repo.git MyProject
+cd MyProject
+
+python main.py -project-path "%CD%" -studio-path "C:\\AS45\\exe" -as-version 45 -prepare-only
+
+echo Project ready at: %CD%\\OCB.apj
+        </pre>
+        """
+    
+    def get_step_by_step_content(self):
+        """Content for step-by-step process."""
+        return """
+        <h2>🔍 What Happens Step-by-Step</h2>
+        
+        <p>Understanding the complete process the Selector performs:</p>
+        
+        <h3>Step 1: Validate Project Structure</h3>
+        <ul>
+            <li>Checks if project directory exists</li>
+            <li>Verifies Logical folder exists</li>
+            <li>Verifies Physical folder exists</li>
+            <li>If validation fails, process stops immediately</li>
+        </ul>
+        
+        <h3>Step 2: Clear Libraries Directory</h3>
+        <ul>
+            <li>Goes to: Logical\\Libraries\\</li>
+            <li>Deletes ALL files and subdirectories inside</li>
+            <li>Keeps the Libraries folder itself (empties it)</li>
+            <li>Why: Removes old files from previous AS version</li>
+        </ul>
+        
+        <h3>Step 3: Copy Version-Specific Libraries</h3>
+        <p><strong>For AS 4.5:</strong></p>
+        <ul>
+            <li>Source: Logical\\Libraries_45\\</li>
+            <li>Target: Logical\\Libraries\\</li>
+            <li>Copies: ALL files and subdirectories</li>
+        </ul>
+        <p><strong>For AS 6:</strong></p>
+        <ul>
+            <li>Source: Logical\\Libraries_6\\</li>
+            <li>Target: Logical\\Libraries\\</li>
+            <li>Copies: ALL files and subdirectories</li>
+        </ul>
+        
+        <h3>Step 4: Update Physical.pkg</h3>
+        <p><strong>For AS 4.5:</strong></p>
+        <ul>
+            <li>Delete: Physical\\Physical.pkg (if exists)</li>
+            <li>Copy: Physical_45.pkg -> Physical.pkg</li>
+        </ul>
+        <p><strong>For AS 6:</strong></p>
+        <ul>
+            <li>Delete: Physical\\Physical.pkg (if exists)</li>
+            <li>Copy: Physical_6.pkg -> Physical.pkg</li>
+        </ul>
+        
+        <h3>Step 5: Update OCB.apj</h3>
+        <p><strong>For AS 4.5:</strong></p>
+        <ul>
+            <li>Delete: OCB.apj (if exists)</li>
+            <li>Copy: OCB_as45.apj -> OCB.apj</li>
+        </ul>
+        <p><strong>For AS 6:</strong></p>
+        <ul>
+            <li>Delete: OCB.apj (if exists)</li>
+            <li>Copy: OCB_as6.apj -> OCB.apj</li>
+        </ul>
+        
+        <h3>Step 6: Launch Automation Studio (Full Mode Only)</h3>
+        <p><strong>Full Procedure:</strong></p>
+        <ul>
+            <li>Launches: AutomationStudio.exe with project file</li>
+            <li>AS opens with your configured project</li>
+        </ul>
+        <p><strong>Prepare-Only Mode:</strong></p>
+        <ul>
+            <li>SKIPS this step</li>
+            <li>Files ready but AS not launched</li>
+        </ul>
+        
+        <div style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 15px 0;">
+            <strong>Important:</strong> Version-specific files (Libraries_45, Physical_45.pkg, OCB_as45.apj) are NEVER modified - they're your source templates.
+        </div>
+        """
+    
+    def get_file_operations_content(self):
+        """Content for file operations."""
+        return """
+        <h2>📁 File Operations Explained</h2>
+        
+        <h3>Files Modified (Active Work Files):</h3>
+        <table style="width:100%; border-collapse: collapse; margin: 15px 0;">
+            <tr style="background-color: #f8f9fa;">
+                <th style="padding: 8px; border: 1px solid #ddd;">File/Folder</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">What Happens</th>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Logical/Libraries/</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">Entire contents replaced from Libraries_45 or Libraries_6</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Physical/Physical.pkg</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">Deleted and replaced from Physical_45.pkg or Physical_6.pkg</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>OCB.apj</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">Deleted and replaced from OCB_as45.apj or OCB_as6.apj</td>
+            </tr>
+        </table>
+        
+        <h3>Files NEVER Modified (Source Templates):</h3>
+        <table style="width:100%; border-collapse: collapse; margin: 15px 0;">
+            <tr style="background-color: #f8f9fa;">
+                <th style="padding: 8px; border: 1px solid #ddd;">File/Folder</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Purpose</th>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Logical/Libraries_45/</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">AS 4.5 source template - always preserved</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Logical/Libraries_6/</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">AS 6 source template - always preserved</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Physical/Physical_45.pkg</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">AS 4.5 source - always preserved</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>Physical/Physical_6.pkg</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">AS 6 source - always preserved</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>OCB_as45.apj</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">AS 4.5 source - always preserved</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;"><strong>OCB_as6.apj</strong></td>
+                <td style="padding: 8px; border: 1px solid #ddd;">AS 6 source - always preserved</td>
+            </tr>
+        </table>
+        
+        <h3>The Flow:</h3>
+        <p><strong>Example for AS 4.5:</strong></p>
+        <pre>
+Libraries_45/ (source) -> Libraries/ (active)
+Physical_45.pkg        -> Physical.pkg
+OCB_as45.apj           -> OCB.apj
+
+Result: Project configured for AS 4.5
+        </pre>
+        
+        <div style="background-color: #e8f6f3; padding: 15px; border-left: 4px solid #16a085; margin: 15px 0;">
+            <strong>Key Concept:</strong> The Selector manages "active" files (Libraries, Physical.pkg, OCB.apj) automatically. You work with version-specific templates (Libraries_45, Physical_45.pkg, OCB_as45.apj) which are never modified.
+        </div>
+        """
+    
+    def get_multiple_projects_content(self):
+        """Content for multiple projects."""
+        return """
+        <h2>🗂️ Working with Multiple Projects</h2>
+        
+        <p>The Selector now supports managing multiple projects easily.</p>
+        
+        <h3>Adding Projects:</h3>
+        <ol>
+            <li>Click <strong>"Add Project..."</strong> button</li>
+            <li>Browse to your project directory</li>
+            <li>Enter a friendly name (e.g., "Production Line")</li>
+            <li>Optionally add a description</li>
+            <li>Project is added to your list</li>
+        </ol>
+        
+        <h3>Switching Between Projects:</h3>
+        <ol>
+            <li>Click on any project in the Project Selection list</li>
+            <li>Project becomes active immediately</li>
+            <li>Select your AS version</li>
+            <li>Click "Open Project"</li>
+        </ol>
+        
+        <h3>Project List Features:</h3>
+        <ul>
+            <li><strong>Multiple Projects</strong>: Add as many as you need</li>
+            <li><strong>Quick Switching</strong>: One click to change active project</li>
+            <li><strong>Remembered</strong>: Last used project auto-selected</li>
+            <li><strong>Descriptions</strong>: Add notes to identify projects</li>
+        </ul>
+        
+        <h3>Workflow Example:</h3>
+        <pre>
+Morning: Click "Production" -> Select AS 4.5 -> Open Project
+Afternoon: Click "Development" -> Select AS 6 -> Open Project  
+Evening: Click "Testing" -> Select AS 4.5 -> Open Project
+        </pre>
+        
+        <p>Each project maintains its own version-specific files and auto-sync tracks changes separately.</p>
+        
+        <h3>CLI Support:</h3>
+        <p>You can also manage projects via CLI:</p>
+        <pre>
+python main.py -add-project "NewProj" "C:\\Projects\\New"
+python main.py -remove-project "OldProj"
+python main.py -list-projects
+        </pre>
         """
