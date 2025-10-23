@@ -15,6 +15,12 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QUrl
 from PyQt6.QtGui import QFont
 
+from src.config.settings import ConfigManager
+from src.ui.styles import MAIN_STYLE
+
+
+logger = logging.getLogger(__name__)
+
 # Try to import multimedia support (may not be available)
 try:
     from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
@@ -22,12 +28,6 @@ try:
 except ImportError:
     MULTIMEDIA_AVAILABLE = False
     logger.warning("PyQt6.QtMultimedia not available - sound effects disabled")
-
-from src.config.settings import ConfigManager
-from src.ui.styles import MAIN_STYLE
-
-
-logger = logging.getLogger(__name__)
 
 
 # Funny messages for wrong password attempts
