@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Automation Studio Selector - Complete Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #172b4d;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #0052cc;
+            border-bottom: 3px solid #0052cc;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        h2 {
+            color: #00875a;
+            border-bottom: 2px solid #00875a;
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #172b4d;
+            margin-top: 25px;
+        }
+        code {
+            background-color: #f4f5f7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 13px;
+        }
+        pre {
+            background-color: #f4f5f7;
+            border: 1px solid #dfe1e6;
+            border-left: 4px solid #0052cc;
+            padding: 16px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 13px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        th {
+            background-color: #f4f5f7;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #dfe1e6;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px;
+            border: 1px solid #dfe1e6;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .info-box {
+            background-color: #deebff;
+            border-left: 4px solid #0052cc;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+        .warning-box {
+            background-color: #fffae6;
+            border-left: 4px solid #ff991f;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+        .success-box {
+            background-color: #e3fcef;
+            border-left: 4px solid #00875a;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+        .cover-page {
+            text-align: center;
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        .cover-title {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .cover-subtitle {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        .cover-info {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cover-page">
+        <div class="cover-title">Automation Studio Selector</div>
+        <div class="cover-subtitle">Complete User Guide</div>
+        <div class="cover-info">
+            Version 1.1.0<br>
+            Created by Vitaly Grosman<br>
+            Indigo R&D Division<br>
+            © 2025
+        </div>
+    </div>
+<h1>Automation Studio Selector - Complete Guide</h1>
+<p><strong>Professional Tool for Managing Multiple Automation Studio Installations</strong></p>
+<hr>
+<h2>Table of Contents</h2>
+<li>[Overview](#overview)</li>
+<li>[Installation](#installation)</li>
+<li>[First-Time Setup](#first-time-setup)</li>
+<li>[User Interface Guide](#user-interface-guide)</li>
+<li>[Daily Usage](#daily-usage)</li>
+<li>[What Happens Behind the Scenes](#what-happens-behind-the-scenes)</li>
+<li>[Auto-Sync System](#auto-sync-system)</li>
+<li>[Command-Line Interface (CLI)](#command-line-interface-cli)</li>
+<li>[Jenkins & CI/CD Integration](#jenkins--cicd-integration)</li>
+<li>[Settings & Configuration](#settings--configuration)</li>
+<li>[Troubleshooting](#troubleshooting)</li>
+<li>[Tips & Best Practices](#tips--best-practices)</li>
+<hr>
+<h2>Overview</h2>
+<h3>What is Automation Studio Selector?</h3>
+<p>The Automation Studio Selector solves a critical problem: managing multiple versions of Automation Studio (AS 4.5, AS 6, etc.) with a single project.</p>
+<p><strong>The Problem:</strong></p>
+<li>Before: Separate project copies for each AS version</li>
+<li>Manual file copying between versions</li>
+<li>Risk of losing changes when switching</li>
+<li>Complex project management</li>
+<p><strong>The Solution:</strong></p>
+<li>One project works with all AS versions</li>
+<li>Automatic file configuration and switching</li>
+<li>Never lose work with auto-sync</li>
+<li>Professional, enterprise-ready tool</li>
+<h3>Key Features</h3>
+<li><span style="color: #00875a;">✓</span> Support for multiple AS versions (4.5, 6, and future versions)</li>
+<li><span style="color: #00875a;">✓</span> Multiple project management</li>
+<li><span style="color: #00875a;">✓</span> Automatic library and configuration switching</li>
+<li><span style="color: #00875a;">✓</span> Auto-sync system (every 5 minutes, on AS close, on app close)</li>
+<li><span style="color: #00875a;">✓</span> Command-line interface for automation</li>
+<li><span style="color: #00875a;">✓</span> Jenkins/CI-CD ready</li>
+<li><span style="color: #00875a;">✓</span> Comprehensive logging</li>
+<li><span style="color: #00875a;">✓</span> Professional UI with modern design</li>
+<hr>
+<h2>Installation</h2>
+<h3>System Requirements</h3>
+<li><strong>OS</strong>: Windows 10/11 (64-bit)</li>
+<li><strong>Privileges</strong>: Administrator for installation</li>
+<li><strong>Disk Space</strong>: ~200 MB</li>
+<li><strong>AS Versions</strong>: Any (4.5, 6, or newer)</li>
+<h3>Installation Steps</h3>
+<li>Download <code>AutomationStudioSelector_Setup_v1.1.0.exe</code></li>
+<li>Right-click → "Run as administrator"</li>
+<li>Follow installation wizard</li>
+<li>Launch from Start Menu or desktop shortcut</li>
+<h3>Installation Locations</h3>
+<li><strong>Application</strong>: <code>C:\Program Files\Automation Studio Selector\</code></li>
+<li><strong>User Settings</strong>: <code>%USERPROFILE%\.automation_selector\</code></li>
+<li><strong>Logs</strong>: <code>%USERPROFILE%\.automation_selector\logs\</code></li>
+<hr>
+<h2>First-Time Setup</h2>
+<p>When you first launch the application, configure:</p>
+<h3>1. Automation Studio Paths</h3>
+<p><strong>Add AS 4.5:</strong></p>
+<li>Click "Add AS 4.5"</li>
+<li>Browse to: <code>C:\BrAutomation\AS45\Bin-en\</code></li>
+<li>Select <code>AutomationStudio.exe</code></li>
+<p><strong>Add AS 6:</strong></p>
+<li>Click "Add AS 6"</li>
+<li>Browse to: <code>C:\Program Files (x86)\BRAutomation\AS6\bin-en\</code></li>
+<li>Select <code>AutomationStudio.exe</code></li>
+<h3>2. Add Your Projects</h3>
+<p>After setup closes:</p>
+<li>Click "Add Project..." in main window</li>
+<li>Browse to your project directory</li>
+<li>Enter a friendly name</li>
+<li>Optionally add description</li>
+<li>Click OK</li>
+<hr>
+<h2>User Interface Guide</h2>
+<h3>Header Section</h3>
+<li><strong>Logo</strong>: Your custom blue logo</li>
+<li><strong>Title</strong>: "Automation Studio Selector"</li>
+<h3>Project Selection</h3>
+<li><strong>List</strong>: Shows all your configured projects</li>
+<li><strong>Format</strong>: <code>ProjectName - C:\Path\To\Project</code></li>
+<li><strong>Selection</strong>: Click to select (highlighted in teal)</li>
+<li><strong>Buttons</strong>:</li>
+<p>  - <strong>Add Project...</strong>: Add new project to list</p>
+<p>  - <strong>Remove Selected</strong>: Remove project from list (files not deleted)</p>
+<h3>Automation Studio Selection</h3>
+<li><strong>List</strong>: Shows configured AS versions</li>
+<li><strong>Format</strong>: <code>Automation Studio X.X - C:\Path\To\Exe</code></li>
+<li><strong>Selection</strong>: Click to select (highlighted in teal)</li>
+<li><strong>Double-Click</strong>: Select and immediately open project</li>
+<li><strong>Buttons</strong>:</li>
+<p>  - <strong>Refresh List</strong>: Reload AS configurations</p>
+<p>  - <strong>Open Project</strong>: Launch selected AS with selected project</p>
+<h3>Operation Progress</h3>
+<li><strong>Progress Bar</strong>: Shows during file operations</li>
+<li><strong>Steps</strong>: Validating → Clearing → Copying → Updating → Opening</li>
+<li><strong>Hidden</strong>: When no operations running</li>
+<h3>Session Log</h3>
+<li><strong>Format</strong>: <code>[HH:MM:SS] Message</code></li>
+<li><strong>Indicators</strong>: <code>[OK]</code> for success, <code>[ERROR]</code> for failures</li>
+<li><strong>Auto-scroll</strong>: Shows latest messages</li>
+<li><strong>Clear Log</strong>: Button to clear display</li>
+<h3>Menu System</h3>
+<p><strong>File Menu:</strong></p>
+<li>Setup Automation Studio Paths...</li>
+<li>Manual Sync Now</li>
+<li>Exit</li>
+<p><strong>Settings Menu:</strong></p>
+<li>Sync → Auto-Sync Settings...</li>
+<li>Sync → View Sync Status</li>
+<p><strong>Help Menu:</strong></p>
+<li>How To → Interactive Help...</li>
+<li>How To → Quick Start Guide</li>
+<li>About</li>
+<hr>
+<h2>Daily Usage</h2>
+<h3>Basic Workflow</h3>
+<li><strong>Select Project</strong>: Click on project in list</li>
+<li><strong>Select AS Version</strong>: Click on AS 4.5 or AS 6</li>
+<li><strong>Click "Open Project"</strong>: Green button</li>
+<li><strong>Work Normally</strong>: AS opens with your project</li>
+<li><strong>Auto-Sync</strong>: Changes saved automatically</li>
+<h3>Switching Versions</h3>
+<li>Close Automation Studio</li>
+<li>Select different AS version in Selector</li>
+<li>Click "Open Project"</li>
+<li>Your previous work is preserved!</li>
+<hr>
+<h2>What Happens Behind the Scenes</h2>
+<h3>Complete Process (6 Steps)</h3>
+<p><strong>Step 1: Validate Project Structure</strong></p>
+<li>Checks Logical and Physical folders exist</li>
+<li>Validates project structure</li>
+<li>Stops if validation fails</li>
+<p><strong>Step 2: Clear Libraries Directory</strong></p>
+<li>Goes to <code>Logical\Libraries\</code></li>
+<li>Deletes ALL files inside</li>
+<li>Prepares for new version</li>
+<p><strong>Step 3: Copy Version-Specific Libraries</strong></p>
+<li><strong>For AS 4.5</strong>: <code>Libraries_45\</code> → <code>Libraries\</code></li>
+<li><strong>For AS 6</strong>: <code>Libraries_6\</code> → <code>Libraries\</code></li>
+<li>Copies all files and subdirectories</li>
+<p><strong>Step 4: Update Physical.pkg</strong></p>
+<li><strong>For AS 4.5</strong>: <code>Physical_45.pkg</code> → <code>Physical.pkg</code></li>
+<li><strong>For AS 6</strong>: <code>Physical_6.pkg</code> → <code>Physical.pkg</code></li>
+<li>Deletes old, copies new</li>
+<p><strong>Step 5: Update OCB.apj</strong></p>
+<li><strong>For AS 4.5</strong>: <code>OCB_as45.apj</code> → <code>OCB.apj</code></li>
+<li><strong>For AS 6</strong>: <code>OCB_as6.apj</code> → <code>OCB.apj</code></li>
+<li>Main project file updated</li>
+<p><strong>Step 6: Launch Automation Studio</strong></p>
+<li>Executes: <code>AutomationStudio.exe "ProjectPath\OCB.apj"</code></li>
+<li>AS opens with configured project</li>
+<h3>Required Project Structure</h3>
+<pre><code>YourProject/
+├── Logical/
+│   ├── Libraries/          # Managed automatically
+│   ├── Libraries_45/       # AS 4.5 source (never modified)
+│   └── Libraries_6/        # AS 6 source (never modified)
+├── Physical/
+│   ├── Physical.pkg        # Managed automatically
+│   ├── Physical_45.pkg     # AS 4.5 source (never modified)
+│   └── Physical_6.pkg      # AS 6 source (never modified)
+├── OCB.apj                # Managed automatically
+├── OCB_as45.apj           # AS 4.5 source (never modified)
+└── OCB_as6.apj            # AS 6 source (never modified)
+</pre>
+<p><strong>Important</strong>: Version-specific files (with <code>_45</code> or <code>_6</code> suffixes) are your source templates and are NEVER modified by the Selector.</p>
+<hr>
+<h2>Auto-Sync System</h2>
+<h3>How It Works</h3>
+<p>The auto-sync system automatically copies your changes from the active working directory back to the permanent version-specific storage.</p>
+<p><strong>Example Flow:</strong></p>
+<li>Select AS 6 → <code>Libraries_6</code> content copied to <code>Libraries</code></li>
+<li>Work in AS and modify files in <code>Libraries</code></li>
+<li>Auto-sync triggers → Changes copied from <code>Libraries</code> back to <code>Libraries_6</code></li>
+<li>Select AS 4.5 → <code>Libraries_45</code> content copied to <code>Libraries</code></li>
+<li>Your AS 6 work is safely stored in <code>Libraries_6</code>!</li>
+<h3>Auto-Sync Triggers</h3>
+<p><strong>1. Automation Studio Closes</strong> (Default: Enabled)</p>
+<li>When AS process ends</li>
+<li>Immediate sync of all changes</li>
+<li>Captures work session</li>
+<p><strong>2. Selector Application Closes</strong> (Default: Enabled)</p>
+<li>Final sync on exit</li>
+<li>Safety net for remaining changes</li>
+<p><strong>3. Periodic Timer</strong> (Default: Every 5 minutes)</p>
+<li>Regular background checking</li>
+<li>Syncs only if changes detected</li>
+<li>Configurable interval (1-60 minutes)</li>
+<h3>Configuration</h3>
+<p>Access via <strong>Settings → Sync → Auto-Sync Settings...</strong></p>
+<p><strong>Options:</strong></p>
+<li>Enable/disable each trigger</li>
+<li>Adjust periodic interval</li>
+<li>Configure backup settings (keep 0-10 backups)</li>
+<li>Toggle detailed logging</li>
+<hr>
+<h2>Command-Line Interface (CLI)</h2>
+<h3>Why Use CLI?</h3>
+<p>Perfect for:</p>
+<li>Jenkins/CI-CD pipelines</li>
+<li>Batch processing</li>
+<li>Automated testing</li>
+<li>Remote servers</li>
+<li>Scheduled tasks</li>
+<h3>Basic Usage</h3>
+<p><strong>GUI Mode</strong> (no arguments):</p>
+<pre><code>AutomationStudioSelector.exe
+</pre>
+<p><strong>CLI Mode</strong> (with arguments):</p>
+<pre><code>python main.py -project-path "C:\Projects\MyProject" -studio-path "C:\AS45\exe" -as-version 45 -prepare-only
+</pre>
+<h3>Essential Commands</h3>
+<p><strong>Information:</strong></p>
+<pre><code>python main.py -list-projects      # List all projects
+python main.py -list-studios       # List all AS versions
+python main.py -status             # Show status
+python main.py -version            # Show version
+python main.py -help               # Show help
+</pre>
+<p><strong>With GUI Configuration:</strong></p>
+<pre><code>python main.py ProjectName AS45    # Open project with AS 4.5
+python main.py ProjectName AS6     # Open project with AS 6
+</pre>
+<p><strong>Direct Paths (No GUI Config Needed):</strong></p>
+<pre><code>python main.py -project-path "C:\Path\To\Project" -studio-path "C:\AS45\exe" -as-version 45 -prepare-only
+</pre>
+<h3>The Prepare-Only Mode</h3>
+<p><strong>Critical Parameter</strong>: <code>-prepare-only</code></p>
+<p><strong>What it does:</strong></p>
+<li>✓ Validates project structure</li>
+<li>✓ Clears Libraries directory</li>
+<li>✓ Copies version-specific libraries</li>
+<li>✓ Updates Physical.pkg</li>
+<li>✓ Updates OCB.apj</li>
+<li>✗ Does NOT launch Automation Studio</li>
+<p><strong>Usage:</strong></p>
+<pre><code>python main.py -project-path "C:\Project" -studio-path "C:\AS45\exe" -as-version 45 -prepare-only -silent
+</pre>
+<p><strong>Perfect for:</strong></p>
+<li>Jenkins builds</li>
+<li>Batch processing</li>
+<li>Pre-configuration</li>
+<li>CI/CD pipelines</li>
+<hr>
+<h2>Jenkins & CI/CD Integration</h2>
+<h3>The Complete Jenkins Command</h3>
+<pre><code>python main.py ^
+  -project-path "%WORKSPACE%" ^
+  -studio-path "C:\BrAutomation\AS45\Bin-en\AutomationStudio.exe" ^
+  -as-version 45 ^
+  -prepare-only ^
+  -silent
+</pre>
+<h3>Critical Parameters</h3>
+<h3>Complete Jenkins Script</h3>
+<pre><code>@echo off
+REM Jenkins Build Script
+
+echo Configuring AS project from Git...
+
+python C:\Tools\Selector\main.py ^
+  -project-path "%WORKSPACE%" ^
+  -studio-path "C:\BrAutomation\AS45\Bin-en\AutomationStudio.exe" ^
+  -as-version 45 ^
+  -prepare-only ^
+  -silent
+
+if %errorlevel% equ 0 (
+    echo [OK] Project configured for AS 4.5
+    REM Add your build commands here
+) else (
+    echo [ERROR] Configuration failed
+    exit /b 1
+)
+</pre>
+<h3>Why This Works Without GUI</h3>
+<li>Uses direct paths - no project lookup needed</li>
+<li>Specifies AS version explicitly - no config lookup needed</li>
+<li>Self-contained - everything in the command</li>
+<li>Portable - same script works on any build server</li>
+<h3>Multi-Version Testing</h3>
+<pre><code>@echo off
+REM Test with both AS versions
+
+echo Testing with AS 4.5...
+python main.py -project-path "%WORKSPACE%" -studio-path "C:\AS45\exe" -as-version 45 -prepare-only -silent
+if errorlevel 1 exit /b 1
+
+echo Testing with AS 6...
+python main.py -project-path "%WORKSPACE%" -studio-path "C:\AS6\exe" -as-version 6 -prepare-only -silent
+if errorlevel 1 exit /b 1
+
+echo All tests passed!
+</pre>
+<hr>
+<h2>Settings & Configuration</h2>
+<h3>Auto-Sync Settings</h3>
+<p><strong>Access</strong>: Settings → Sync → Auto-Sync Settings...</p>
+<p><strong>Sync Triggers:</strong></p>
+<li><span style="color: #00875a;">☑</span> Sync when Automation Studio closes</li>
+<li><span style="color: #00875a;">☑</span> Sync when Selector closes</li>
+<p><strong>Periodic Sync:</strong></p>
+<li><span style="color: #00875a;">☑</span> Enable periodic sync</li>
+<li>Interval: 1-60 minutes (default: 5)</li>
+<p><strong>Safety & Logging:</strong></p>
+<li><span style="color: #00875a;">☑</span> Log sync operations</li>
+<li><span style="color: #00875a;">☑</span> Create backups before sync</li>
+<li>Max backups: 0-10 (default: 3)</li>
+<h3>Sync Status</h3>
+<p><strong>Access</strong>: Settings → Sync → View Sync Status</p>
+<p><strong>Information Shown:</strong></p>
+<li>Active Studio version</li>
+<li>Files synced this session</li>
+<li>Total syncs performed</li>
+<li>Last sync timestamp</li>
+<li>Current configuration</li>
+<hr>
+<h2>Troubleshooting</h2>
+<h3>Common Issues</h3>
+<p><strong>"Project structure validation failed"</strong></p>
+<li>Ensure Logical and Physical folders exist</li>
+<li>Check folder permissions</li>
+<li>Verify correct project root</li>
+<p><strong>"Automation Studio executable not found"</strong></p>
+<li>Reconfigure in File → Setup Automation Studio Paths</li>
+<li>Verify AS installation</li>
+<li>Check path accessibility</li>
+<p><strong>"Source libraries directory not found"</strong></p>
+<li>Create <code>Libraries_45</code> or <code>Libraries_6</code> in Logical folder</li>
+<li>Verify folder naming (exact match required)</li>
+<li>Check that source files exist</li>
+<p><strong>Auto-sync not working</strong></p>
+<li>Check Settings → Sync → Auto-Sync Settings</li>
+<li>Enable sync triggers</li>
+<li>Check Session Log for errors</li>
+<li>Try Manual Sync Now</li>
+<h3>Log Files</h3>
+<p><strong>Locations:</strong></p>
+<li>Application: <code>%USERPROFILE%\.automation_selector\logs\application.log</code></li>
+<li>Sessions: <code>%USERPROFILE%\.automation_selector\logs\session_*.log</code></li>
+<p><strong>Contains:</strong></p>
+<li>All operations with timestamps</li>
+<li>Error details</li>
+<li>File operations</li>
+<li>Sync activities</li>
+<hr>
+<h2>Tips & Best Practices</h2>
+<h3>Daily Workflow</h3>
+<p><span style="color: #00875a;">✓</span> <strong>DO:</strong></p>
+<li>Leave Selector open for auto-sync</li>
+<li>Check Session Log for confirmations</li>
+<li>Use double-click for faster opening</li>
+<li>Keep backups enabled</li>
+<p><span style="color: #de350b;">✗</span> <strong>DON'T:</strong></p>
+<li>Edit active files directly (Libraries, Physical.pkg, OCB.apj)</li>
+<li>Delete version-specific directories while AS running</li>
+<li>Run multiple AS versions simultaneously</li>
+<li>Disable auto-sync without backup strategy</li>
+<h3>Keyboard Shortcuts</h3>
+<li><strong>F5</strong>: Refresh studio list</li>
+<li><strong>Enter</strong>: Open project (when selected)</li>
+<li><strong>Double-Click</strong>: Select and open immediately</li>
+<li><strong>ESC</strong>: Close dialogs</li>
+<h3>Project Management</h3>
+<li>Use descriptive project names</li>
+<li>Add descriptions to identify projects</li>
+<li>Test in both AS versions before deployment</li>
+<li>Regular manual sync before important work</li>
+<h3>Performance Tips</h3>
+<p><strong>For Large Projects:</strong></p>
+<li>Increase periodic sync interval to 10-15 minutes</li>
+<li>Monitor disk space (backups accumulate)</li>
+<li>Use SSD storage for better performance</li>
+<p><strong>For System Resources:</strong></p>
+<li>Close unused AS instances</li>
+<li>Clean old logs periodically</li>
+<li>Sufficient RAM for large projects</li>
+<hr>
+<h2>CLI Quick Reference</h2>
+<h3>Essential Commands</h3>
+<pre><code># GUI mode
+AutomationStudioSelector.exe
+
+# Open with configured project
+python main.py ProjectName AS45
+
+# Jenkins mode (no GUI config)
+python main.py -project-path "C:\Project" -studio-path "C:\AS45\exe" -as-version 45 -prepare-only -silent
+
+# List projects
+python main.py -list-projects
+
+# Show help
+python main.py -help
+</pre>
+<h3>Common Options</h3>
+<li><code>-prepare-only</code>: Configure files but don't launch AS</li>
+<li><code>-silent</code>: No output (automation mode)</li>
+<li><code>-verbose</code>: Detailed output (debugging)</li>
+<li><code>-wait</code>: Wait for AS to close</li>
+<li><code>-as-version</code>: <code>45</code> or <code>6</code> (required with <code>-studio-path</code>)</li>
+<h3>Exit Codes</h3>
+<li><code>0</code> = Success</li>
+<li><code>1</code> = General error</li>
+<li><code>3</code> = Project not found</li>
+<li><code>4</code> = Studio not found</li>
+<hr>
+<h2>Advanced Features</h2>
+<h3>Multiple Projects</h3>
+<li>Add unlimited projects</li>
+<li>Quick switching between projects</li>
+<li>Each project maintains separate version files</li>
+<li>Auto-sync tracks changes per project</li>
+<h3>Manual Sync</h3>
+<p><strong>When to use:</strong></p>
+<li>Before switching AS versions</li>
+<li>After important changes</li>
+<li>Testing sync functionality</li>
+<li>Before closing application</li>
+<p><strong>Access</strong>: File → Manual Sync Now</p>
+<h3>Configuration Backup</h3>
+<p>All settings stored in JSON:</p>
+<li><code>%USERPROFILE%\.automation_selector\config.json</code></li>
+<li><code>%USERPROFILE%\.automation_selector\auto_sync_config.xml</code></li>
+<hr>
+<h2>Summary</h2>
+<h3>The Power of Automation Studio Selector</h3>
+<p><strong>Time Saving</strong>: No more manual file copying</p>
+<p><strong>Error Prevention</strong>: Auto-sync prevents data loss</p>
+<p><strong>Flexibility</strong>: Switch AS versions instantly</p>
+<p><strong>Transparency</strong>: Full logging of all operations</p>
+<p><strong>Automation</strong>: CLI support for Jenkins/CI-CD</p>
+<p><strong>Professional</strong>: Enterprise-ready solution</p>
+<h3>Getting Started Checklist</h3>
+<li><span style="color: #00875a;">☑</span> Install the application</li>
+<li><span style="color: #00875a;">☑</span> Configure AS 4.5 and AS 6 paths</li>
+<li><span style="color: #00875a;">☑</span> Add your first project</li>
+<li><span style="color: #00875a;">☑</span> Select AS version and click "Open Project"</li>
+<li><span style="color: #00875a;">☑</span> Work normally - auto-sync handles the rest!</li>
+<hr>
+<p><strong>Created with ❤️ by Vitaly Grosman - Indigo R&D Division</strong></p>
+<p><em>For support, refer to the interactive help system: Help → How To → Interactive Help...</em></p>
+
+</body>
+</html>
