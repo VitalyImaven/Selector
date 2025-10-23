@@ -26,9 +26,8 @@ ICON_FILE = None
 
 # Additional files to include
 EXTRA_DATA_FILES = [
-    ('USER_TUTORIAL.md', '.'),          # Include user tutorial
-    ('DEPLOYMENT_GUIDE.md', '.'),       # Include deployment guide
-    ('README.md', '.'),                 # Include readme
+    ('MASTER_TUTORIAL.md', '.'),        # Include master tutorial
+    ('MASTER_TUTORIAL_Confluence.html', '.'),  # Include HTML version
 ]
 
 # Additional modules to include (if import detection fails)

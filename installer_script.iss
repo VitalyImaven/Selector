@@ -36,7 +36,8 @@ Source: "dist\AutomationStudioSelector\*"; DestDir: "{app}"; Flags: ignoreversio
 ; Configuration example
 Source: "auto_sync_config_example.xml"; DestDir: "{app}"; Flags: ignoreversion
 ; Documentation
-Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "MASTER_TUTORIAL.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "MASTER_TUTORIAL_Confluence.html"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Automation Studio Selector"; Filename: "{app}\AutomationStudioSelector.exe"
