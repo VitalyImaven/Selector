@@ -73,7 +73,7 @@ def run_gui_mode():
         # Create QApplication
         app = QApplication(sys.argv)
         app.setApplicationName("Automation Studio Selector")
-        app.setApplicationVersion("1.1.0")
+        app.setApplicationVersion("1.2.0")
         app.setOrganizationName("Automation Tools")
         
         # Set application properties (High DPI scaling is enabled by default in PyQt6)

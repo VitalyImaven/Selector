@@ -1,7 +1,7 @@
 [Setup]
 ; Basic application information
 AppName=Automation Studio Selector
-AppVersion=1.1.1
+AppVersion=1.2.0
 AppPublisher=Vitaly Grosman - Indigo R&D Division
 AppContact=Vitaly Grosman
 AppCopyright=© 2025 Vitaly Grosman, Indigo R&D Division
@@ -14,8 +14,8 @@ AllowNoIcons=yes
 LicenseFile=
 InfoAfterFile=
 OutputDir=installer
-OutputBaseFilename=AutomationStudioSelector_Setup_v1.1.1
-SetupIconFile=
+OutputBaseFilename=AutomationStudioSelector_Setup_v1.2.0
+SetupIconFile=assets\app_icon.ico
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
@@ -57,9 +57,10 @@ procedure InitializeWizard;
 begin
   WizardForm.WelcomeLabel1.Caption := 'Welcome to Automation Studio Selector Setup';
   WizardForm.WelcomeLabel2.Caption := 
-    'This will install Automation Studio Selector v1.1.0 on your computer.' + #13#13 +
+    'This will install Automation Studio Selector v1.2.0 on your computer.' + #13#13 +
     'This professional tool allows you to manage multiple Automation Studio installations ' +
     'and seamlessly switch between project configurations.' + #13#13 +
+    'New in v1.2.0: Prepare-only mode, comprehensive feedback system, and enhanced configuration.' + #13#13 +
     'Created by Vitaly Grosman - Indigo R&D Division' + #13#13 +
     'Click Next to continue, or Cancel to exit Setup.';
 end;

@@ -10,7 +10,6 @@ echo Configuring OCB project for AS 6...
 
 "C:\Program Files\Automation Studio Selector\AutomationStudioSelector.exe" ^
   -project-path "C:\Work\Indigo\CrossPlatformAS\Br_MultiAS_OCB\OCB" ^
-  -studio-path "C:\Program Files (x86)\BRAutomation\AS6\bin-en\AutomationStudio.exe" ^
   -as-version 6 ^
   -prepare-only
 

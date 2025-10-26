@@ -1,0 +1,97 @@
+================================================================================
+PREPARE-ONLY MODE - QUICK GUIDE
+================================================================================
+
+WHAT'S NEW:
+==========
+New checkbox: "Launch Automation Studio after preparation"
+
+WHERE TO FIND IT:
+================
+Main window > Select Automation Studio section > Below the AS version list
+
+HOW IT WORKS:
+============
+
+[✓] CHECKED (Default):
+---------------------
+  1. Prepare all files ✓
+  2. Launch AS automatically ✓
+  
+  Result: "Project prepared and Automation Studio launched successfully!"
+  
+  Use when: Normal daily workflow
+
+[ ] UNCHECKED (Prepare-Only):
+----------------------------
+  1. Prepare all files ✓
+  2. Launch AS automatically ✗ (SKIPPED)
+  
+  Result: "Project prepared successfully! You can now open it manually."
+  
+  Use when:
+    - Batch processing multiple projects
+    - Automation/CI-CD workflows
+    - Want to check files before opening AS
+    - Preparing for different versions without opening
+
+BUTTON CHANGED:
+==============
+Old: "Open Project"
+New: "Prepare Project"
+
+WHAT GETS PREPARED:
+==================
+✓ Validate project structure
+✓ Clear Libraries directory
+✓ Copy version-specific libraries (Libraries_45 or Libraries_6)
+✓ Update Physical.pkg
+✓ Update OCB.apj (project file)
+✗ Launch AS (only if checkbox is checked)
+
+OPENING AS MANUALLY:
+===================
+If you prepared without launching:
+  1. Navigate to your project folder
+  2. Double-click OCB.apj
+  OR
+  1. Open Automation Studio
+  2. File > Open Project > Select OCB.apj
+
+EXAMPLES:
+========
+
+Example 1: Quick Work (Default)
+  [✓] Launch Automation Studio after preparation
+  Click "Prepare Project"
+  -> AS opens automatically, start working immediately
+
+Example 2: Prepare for Testing
+  [ ] Launch Automation Studio after preparation
+  Click "Prepare Project"
+  -> Files ready, AS doesn't open
+  -> You can check files, then open manually when ready
+
+Example 3: Batch Preparation
+  [ ] Launch Automation Studio after preparation
+  Prepare for AS 4.5
+  Prepare for AS 6
+  -> Both configurations ready, neither AS opens
+  -> Open manually the one you want to work with
+
+BACKWARD COMPATIBLE:
+===================
+✓ Checkbox is CHECKED by default
+✓ Works exactly as before if you never uncheck it
+✓ No changes to existing workflows
+
+TECHNICAL NOTE:
+==============
+This GUI feature provides the same functionality as the CLI flag:
+  CLI: --prepare-only
+  GUI: Uncheck the checkbox
+
+================================================================================
+Feature ready to use! Test it with both modes.
+================================================================================
+

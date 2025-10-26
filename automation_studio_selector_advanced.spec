@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Basic application info
 APP_NAME = 'AutomationStudioSelector'
-APP_VERSION = '1.0.0'
+APP_VERSION = '1.2.0'
 APP_AUTHOR = 'Vitaly Grosman - Indigo R&D Division'
 
 # Build options
@@ -21,8 +21,8 @@ OPTIMIZE_SIZE = True        # Set to False for faster builds
 INCLUDE_MSVCRT = True       # Include Microsoft Visual C++ runtime
 
 # Icon configuration (optional)
-# ICON_FILE = 'assets/app_icon.ico'  # Uncomment and set path to .ico file
-ICON_FILE = None
+ICON_FILE = 'assets/app_icon.ico'  # Application icon file
+# ICON_FILE = None  # Set to None if you don't have an icon
 
 # Additional files to include
 EXTRA_DATA_FILES = [
@@ -49,8 +49,8 @@ EXCLUDED_MODULES = [
     'sqlite3',
     'ssl',
     'http',
-    'urllib',
-    'email',
+    # 'urllib',  # REMOVED - needed for feedback feature
+    # 'email',   # REMOVED - might be needed for future features
 ]
 
 # ========================================
@@ -90,6 +90,10 @@ hidden_imports = [
     'subprocess',
     'shutil',
     'time',
+    'urllib',
+    'urllib.parse',
+    'webbrowser',
+    'platform',
 ] + EXTRA_HIDDEN_IMPORTS
 
 # ========================================

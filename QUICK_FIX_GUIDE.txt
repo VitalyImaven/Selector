@@ -1,0 +1,44 @@
+================================================================================
+QUICK FIX GUIDE - Feedback Feature PyInstaller Error
+================================================================================
+
+PROBLEM: "No module named 'urllib'" error when using Send Feedback
+
+SOLUTION: Rebuild the executable with fixed configuration
+
+STEPS TO FIX:
+============
+
+1. Open Command Prompt in project folder
+2. Run: rebuild_with_feedback_fix.bat
+3. Wait 2-5 minutes for build
+4. Test the new executable
+
+That's it! ✓
+
+WHAT WAS FIXED:
+==============
+- Removed 'urllib' from excluded modules
+- Added 'urllib', 'urllib.parse', 'webbrowser', 'platform' to build
+
+FILES CHANGED:
+=============
+✓ automation_studio_selector.spec
+✓ automation_studio_selector_advanced.spec
+
+WHERE'S THE NEW EXE:
+===================
+dist\AutomationStudioSelector\AutomationStudioSelector.exe
+
+TEST IT:
+========
+1. Run AutomationStudioSelector.exe
+2. Click Help > Send Feedback/Report Issue...
+3. Email client should open - NO ERROR!
+
+SIZE IMPACT:
+===========
++130-270 KB (tiny increase)
+
+================================================================================
+

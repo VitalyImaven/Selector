@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QListWidget, QListWidgetItem, QWidget, QMessageBox, QProgressBar,
     QTextEdit, QGroupBox, QStatusBar, QMenuBar, QMenu, QLineEdit, QFileDialog,
-    QSizePolicy, QInputDialog, QDialog
+    QSizePolicy, QInputDialog, QDialog, QApplication, QCheckBox
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction, QFont, QIcon, QPixmap, QKeySequence, QShortcut
@@ -34,12 +34,13 @@ class ProjectWorker(QThread):
     progress_updated = pyqtSignal(str)
     operation_completed = pyqtSignal(bool, str)
     
-    def __init__(self, project_service: ProjectService, project_root: Path, studio: AutomationStudio):
+    def __init__(self, project_service: ProjectService, project_root: Path, studio: AutomationStudio, launch_as: bool = True):
         """Initialize worker thread."""
         super().__init__()
         self.project_service = project_service
         self.project_root = project_root
         self.studio = studio
+        self.launch_as = launch_as
     
     def run(self):
         """Execute project setup in background thread."""
@@ -61,11 +62,14 @@ class ProjectWorker(QThread):
             self.progress_updated.emit("Updating project file...")
             self.project_service.update_project_file(self.project_root, self.studio)
             
-            self.progress_updated.emit("Opening project...")
-            self.project_service.open_project_file(self.project_root, self.studio)
-            
-            self.progress_updated.emit("Project setup completed successfully!")
-            self.operation_completed.emit(True, "Project opened successfully!")
+            if self.launch_as:
+                self.progress_updated.emit("Opening Automation Studio...")
+                self.project_service.open_project_file(self.project_root, self.studio)
+                self.progress_updated.emit("Project setup completed - Automation Studio launched!")
+                self.operation_completed.emit(True, "Project prepared and Automation Studio launched successfully!")
+            else:
+                self.progress_updated.emit("Project preparation completed!")
+                self.operation_completed.emit(True, "Project prepared successfully! You can now open it manually.")
             
         except Exception as e:
             logger.error(f"Project setup failed: {e}")
@@ -249,6 +253,13 @@ class MainWindow(QMainWindow):
         
         help_menu.addSeparator()
         
+        # Send Feedback action
+        feedback_action = QAction("Send Feedback/Report Issue...", self)
+        feedback_action.triggered.connect(self.send_feedback)
+        help_menu.addAction(feedback_action)
+        
+        help_menu.addSeparator()
+        
         about_action = QAction("About", self)
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
@@ -298,7 +309,7 @@ class MainWindow(QMainWindow):
         
         # Instructions
         instructions = QLabel(
-            "Choose which Automation Studio version to use for opening your project:"
+            "Choose which Automation Studio version to prepare your project for:"
         )
         instructions.setWordWrap(True)
         layout.addWidget(instructions)
@@ -318,23 +329,44 @@ class MainWindow(QMainWindow):
         # Add spacing between list and buttons
         layout.addSpacing(15)
         
-        # Button layout with proper separation
-        button_layout = QHBoxLayout()
-        button_layout.setContentsMargins(10, 0, 10, 10)  # Add margins all around
+        # Button row
+        button_row_layout = QHBoxLayout()
+        button_row_layout.setContentsMargins(10, 10, 10, 5)
         
         self.refresh_btn = QPushButton("Refresh List")
         self.refresh_btn.clicked.connect(self.refresh_studio_list)
-        button_layout.addWidget(self.refresh_btn)
+        button_row_layout.addWidget(self.refresh_btn)
         
-        button_layout.addStretch()
+        button_row_layout.addStretch()
         
-        self.select_button = QPushButton("Open Project")
+        self.select_button = QPushButton("Prepare Project")
         self.select_button.setObjectName("primary")
         self.select_button.clicked.connect(self.open_selected_project)
         self.select_button.setEnabled(False)
-        button_layout.addWidget(self.select_button)
+        button_row_layout.addWidget(self.select_button)
         
-        layout.addLayout(button_layout)
+        layout.addLayout(button_row_layout)
+        
+        # Add checkbox below buttons
+        checkbox_layout = QHBoxLayout()
+        checkbox_layout.setContentsMargins(10, 5, 10, 10)
+        
+        self.launch_as_checkbox = QCheckBox("Launch Automation Studio after preparation")
+        self.launch_as_checkbox.setChecked(True)  # Checked by default
+        self.launch_as_checkbox.setStyleSheet("""
+            QCheckBox {
+                font-size: 13px;
+                padding: 5px;
+            }
+            QCheckBox::indicator {
+                width: 18px;
+                height: 18px;
+            }
+        """)
+        checkbox_layout.addWidget(self.launch_as_checkbox)
+        checkbox_layout.addStretch()
+        
+        layout.addLayout(checkbox_layout)
         parent_layout.addWidget(group)
     
     def setup_progress_section(self, parent_layout):
@@ -831,6 +863,9 @@ class MainWindow(QMainWindow):
                 )
                 return
             
+            # Get checkbox state
+            launch_as = self.launch_as_checkbox.isChecked()
+            
             # Disable UI during operation
             self.set_ui_enabled(False)
             self.progress_bar.setVisible(True)
@@ -842,13 +877,14 @@ class MainWindow(QMainWindow):
             # Start auto-sync session
             self.auto_sync_manager.start_session(studio)
             
-            # Start worker thread
-            self.worker_thread = ProjectWorker(self.project_service, self.project_root, studio)
+            # Start worker thread with launch_as parameter
+            self.worker_thread = ProjectWorker(self.project_service, self.project_root, studio, launch_as)
             self.worker_thread.progress_updated.connect(self.on_progress_updated)
             self.worker_thread.operation_completed.connect(self.on_operation_completed)
             self.worker_thread.start()
             
-            self.log_message(f"Starting project setup for {studio.display_name}")
+            action = "Starting project preparation" if not launch_as else "Starting project setup"
+            self.log_message(f"{action} for {studio.display_name}")
             
         except Exception as e:
             logger.error(f"Error opening project: {e}")
@@ -891,6 +927,7 @@ class MainWindow(QMainWindow):
         self.add_project_btn.setEnabled(enabled)
         self.remove_project_btn.setEnabled(enabled and self.project_list.currentItem() is not None)
         self.refresh_btn.setEnabled(enabled)
+        self.launch_as_checkbox.setEnabled(enabled)
         
         # Only enable select button if all conditions are met
         if enabled:
@@ -1097,17 +1134,177 @@ class MainWindow(QMainWindow):
                 f"Failed to show quick start guide:\n{str(e)}"
             )
     
+    def send_feedback(self):
+        """Open user's email application to send feedback with system and application information."""
+        try:
+            import platform
+            import webbrowser
+            from urllib.parse import quote
+            
+            # Get application version
+            app_version = QApplication.instance().applicationVersion()
+            
+            # Collect system information
+            system_info = []
+            system_info.append(f"Application Version: {app_version}")
+            system_info.append(f"Windows Version: {platform.system()} {platform.release()}")
+            system_info.append(f"Windows Build: {platform.version()}")
+            system_info.append(f"Machine: {platform.machine()}")
+            system_info.append(f"Processor: {platform.processor()}")
+            system_info.append(f"Python Version: {platform.python_version()}")
+            
+            # Collect application configuration
+            app_config = []
+            app_config.append("")
+            app_config.append("APPLICATION CONFIGURATION:")
+            app_config.append("-" * 60)
+            
+            # Current active selections
+            if self.project_root and self.project_root.exists():
+                app_config.append(f"Active Project: {self.project_root}")
+            else:
+                app_config.append("Active Project: None")
+            
+            current_item = self.studio_list.currentItem()
+            if current_item:
+                studio = current_item.data(Qt.ItemDataRole.UserRole)
+                if studio:
+                    app_config.append(f"Selected AS Version: {studio.display_name} ({studio.version.value})")
+            else:
+                app_config.append("Selected AS Version: None")
+            
+            # Launch AS checkbox state
+            launch_as_checked = self.launch_as_checkbox.isChecked()
+            app_config.append(f"Launch AS after preparation: {'Yes' if launch_as_checked else 'No'}")
+            
+            # All configured projects
+            app_config.append("")
+            app_config.append("CONFIGURED PROJECTS:")
+            project_paths = self.config_manager.get_project_paths()
+            if project_paths:
+                for i, project_data in enumerate(project_paths, 1):
+                    name = project_data.get('name', 'Unknown')
+                    path = project_data.get('path', 'Unknown')
+                    desc = project_data.get('description', '')
+                    app_config.append(f"  {i}. {name}")
+                    app_config.append(f"     Path: {path}")
+                    if desc:
+                        app_config.append(f"     Description: {desc}")
+            else:
+                app_config.append("  No projects configured")
+            
+            # All configured Automation Studios
+            app_config.append("")
+            app_config.append("CONFIGURED AUTOMATION STUDIOS:")
+            if self.available_studios:
+                for i, studio in enumerate(self.available_studios, 1):
+                    app_config.append(f"  {i}. {studio.display_name}")
+                    app_config.append(f"     Version: {studio.version.value}")
+                    app_config.append(f"     Path: {studio.executable_path}")
+                    app_config.append(f"     Libraries Suffix: {studio.libraries_suffix}")
+                    app_config.append(f"     Physical PKG Suffix: {studio.physical_pkg_suffix}")
+                    app_config.append(f"     Project File Suffix: {studio.project_file_suffix}")
+            else:
+                app_config.append("  No Automation Studios configured")
+            
+            # Auto-sync configuration
+            app_config.append("")
+            app_config.append("AUTO-SYNC SETTINGS:")
+            try:
+                sync_settings = self.auto_sync_manager.config_service.load_settings()
+                app_config.append(f"  Sync on AS close: {sync_settings.sync_on_as_close}")
+                app_config.append(f"  Sync on app close: {sync_settings.sync_on_app_close}")
+                app_config.append(f"  Periodic sync enabled: {sync_settings.periodic_sync_enabled}")
+                app_config.append(f"  Sync interval: {sync_settings.sync_interval_minutes} minutes")
+                app_config.append(f"  Create backups: {sync_settings.create_backups}")
+                app_config.append(f"  Max backups: {sync_settings.max_backups}")
+                app_config.append(f"  Log sync operations: {sync_settings.log_sync_operations}")
+            except Exception as e:
+                app_config.append(f"  Unable to load sync settings: {e}")
+            
+            # Sync statistics
+            app_config.append("")
+            app_config.append("AUTO-SYNC STATISTICS:")
+            try:
+                stats = self.auto_sync_manager.get_sync_statistics()
+                app_config.append(f"  Active Studio: {stats.get('active_studio', 'None')}")
+                app_config.append(f"  Files synced this session: {stats.get('files_synced_this_session', 0)}")
+                app_config.append(f"  Total syncs performed: {stats.get('total_syncs_performed', 0)}")
+                if stats.get('last_sync_time'):
+                    import datetime
+                    last_sync = datetime.datetime.fromtimestamp(stats['last_sync_time']).strftime("%Y-%m-%d %H:%M:%S")
+                    app_config.append(f"  Last sync: {last_sync}")
+                else:
+                    app_config.append(f"  Last sync: Never")
+            except Exception as e:
+                app_config.append(f"  Unable to load sync statistics: {e}")
+            
+            # Configuration file location
+            app_config.append("")
+            app_config.append("CONFIGURATION FILES:")
+            app_config.append(f"  Main config: {self.config_manager.config_path}")
+            try:
+                app_config.append(f"  Sync config: {self.auto_sync_manager.config_service.config_path}")
+            except:
+                pass
+            
+            # Create email subject
+            subject = "Automation Studio Selector - Feedback/Issue Report"
+            
+            # Create email body
+            body_lines = [
+                "Hello,",
+                "",
+                "Please describe your feedback, suggestion, or issue below:",
+                "=" * 60,
+                "",
+                "",
+                "",
+                "=" * 60,
+                "",
+                "SYSTEM & APPLICATION INFORMATION (automatically collected):",
+                "=" * 60,
+                "",
+                "SYSTEM INFORMATION:",
+                "-" * 60,
+            ]
+            body_lines.extend(system_info)
+            body_lines.extend(app_config)
+            body_lines.append("=" * 60)
+            
+            body = "\n".join(body_lines)
+            
+            # Create mailto link
+            mailto_link = f"mailto:vitaly.grosman@hp.com?subject={quote(subject)}&body={quote(body)}"
+            
+            # Open in default email client
+            webbrowser.open(mailto_link)
+            
+            self.log_message("Opening email client for feedback with full application configuration...")
+            self.status_bar.showMessage("Email client opened for feedback", 3000)
+            
+        except Exception as e:
+            logger.error(f"Error opening email client: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to open email client:\n{str(e)}\n\n"
+                f"Please manually email vitaly.grosman@hp.com with your feedback."
+            )
+    
     def show_about(self):
         """Show about dialog."""
         QMessageBox.about(
             self,
             "About Automation Studio Selector",
-            "Automation Studio Selector v1.0\n\n"
+            "Automation Studio Selector v1.2.0\n\n"
             "A professional tool for managing multiple Automation Studio installations\n"
             "and seamlessly switching between project configurations.\n\n"
             "Features:\n"
             "• Support for multiple AS versions (4.5, 6, and more)\n"
             "• Automatic library and configuration management\n"
+            "• Prepare-only mode for flexible workflows\n"
+            "• Comprehensive feedback system\n"
             "• Session logging and error handling\n"
             "• Modern, intuitive user interface\n\n"
             "Created by Vitaly Grosman\n\n"

@@ -1,0 +1,128 @@
+================================================================================
+FEEDBACK FEATURE - IMPLEMENTATION COMPLETE
+================================================================================
+
+SUMMARY:
+--------
+Successfully added a "Send Feedback/Report Issue" feature to the Help menu.
+Users can now easily send feedback, suggestions, or report issues via email
+with automatically collected system information.
+
+WHAT WAS ADDED:
+---------------
+1. New menu item: Help > Send Feedback/Report Issue...
+2. Automatic system information collection
+3. Pre-populated email template
+4. Opens user's default email application
+
+EMAIL RECIPIENT:
+---------------
+vitaly.grosman@hp.com
+
+SYSTEM INFORMATION COLLECTED:
+-----------------------------
+- Application Version (1.1.0)
+- Windows Version (e.g., Windows 11)
+- Windows Build Number (e.g., 10.0.26100)
+- Machine Architecture (e.g., AMD64)
+- Processor Information
+- Python Version
+- Active Project Path (if selected)
+- Selected Automation Studio Version (if selected)
+
+FILES MODIFIED:
+--------------
+src/ui/main_window.py
+  - Added QApplication to imports (line 11)
+  - Added menu item "Send Feedback/Report Issue..." (lines 252-255)
+  - Added send_feedback() method (lines 1107-1175)
+  - Updated About dialog version to v1.1.0 (line 1182)
+
+HOW TO USE:
+----------
+1. Launch the application: python main.py
+2. Go to Help > Send Feedback/Report Issue...
+3. Your default email client will open with:
+   - Pre-filled recipient: vitaly.grosman@hp.com
+   - Pre-filled subject: "Automation Studio Selector - Feedback/Issue Report"
+   - Pre-filled body with:
+     * Space for user to write their feedback/issue
+     * Automatically collected system information
+
+ERROR HANDLING:
+--------------
+- If email client fails to open, a dialog shows the error and provides
+  fallback instructions to manually email vitaly.grosman@hp.com
+- All actions are logged in the session log for debugging
+
+TESTING:
+--------
+All tests passed successfully:
+[OK] MainWindow imports correctly
+[OK] send_feedback method exists
+[OK] System information collection works
+[OK] Email mailto link generation works
+
+Example system info collected:
+  - Application Version: 1.1.0
+  - Windows Version: Windows 11
+  - Windows Build: 10.0.26100
+  - Machine: AMD64
+  - Processor: Intel64 Family 6 Model 183 Stepping 1, GenuineIntel
+
+EMAIL TEMPLATE EXAMPLE:
+----------------------
+To: vitaly.grosman@hp.com
+Subject: Automation Studio Selector - Feedback/Issue Report
+
+Hello,
+
+Please describe your feedback, suggestion, or issue below:
+============================================================
+
+
+
+
+============================================================
+
+System Information (automatically collected):
+------------------------------------------------------------
+Application Version: 1.1.0
+Windows Version: Windows 11
+Windows Build: 10.0.26100
+Machine: AMD64
+Processor: Intel64 Family 6 Model 183 Stepping 1, GenuineIntel
+Python Version: 3.13.x
+Active Project: C:\Path\To\Your\Project
+Selected AS Version: Automation Studio 4.5
+------------------------------------------------------------
+
+BENEFITS:
+---------
+✓ Easy one-click access for users to send feedback
+✓ No need to manually gather system information
+✓ Uses user's familiar email application
+✓ Professional and organized email format
+✓ Helps with troubleshooting by including system details
+✓ Non-intrusive - only opens when user requests it
+
+NEXT STEPS:
+----------
+The feature is ready to use! To test it:
+1. Run the application
+2. Navigate to Help > Send Feedback/Report Issue...
+3. Verify that your email client opens with the pre-populated template
+
+You may want to:
+- Test the feature with your email client (Outlook, Thunderbird, etc.)
+- Verify the email arrives correctly at vitaly.grosman@hp.com
+- Consider building a new executable with the updated version
+
+DOCUMENTATION:
+-------------
+See FEEDBACK_FEATURE_README.md for detailed technical documentation.
+
+================================================================================
+Implementation completed successfully!
+================================================================================
+

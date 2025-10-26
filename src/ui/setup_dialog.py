@@ -38,7 +38,7 @@ class SetupDialog(QDialog):
         """Setup the user interface."""
         self.setWindowTitle("Setup Automation Studio Paths and Project Root")
         self.setModal(True)
-        self.resize(600, 500)
+        self.resize(650, 580)
         
         # Apply styles
         self.setStyleSheet(MAIN_STYLE)
@@ -77,6 +77,36 @@ class SetupDialog(QDialog):
         )
         instructions.setWordWrap(True)
         layout.addWidget(instructions)
+        
+        # Tips section with default paths
+        tips_frame = QFrame()
+        tips_frame.setStyleSheet("""
+            QFrame {
+                background-color: #e8f4f8;
+                border: 1px solid #3498db;
+                border-radius: 6px;
+                padding: 10px;
+                margin: 5px 0px;
+            }
+        """)
+        tips_layout = QVBoxLayout(tips_frame)
+        tips_layout.setContentsMargins(10, 10, 10, 10)
+        
+        tips_title = QLabel("💡 Default Installation Paths:")
+        tips_title.setStyleSheet("font-weight: bold; color: #2c3e50; font-size: 13px;")
+        tips_layout.addWidget(tips_title)
+        
+        tips_text = QLabel(
+            "Select the AutomationStudio.exe file for each version.\n"
+            "If you have installed Automation Studio with default settings, you can usually find them here:\n\n"
+            "• AS 4.5: C:\\BrAutomation\\AS45\\Bin-en\\AutomationStudio.exe\n"
+            "• AS 6: C:\\Program Files (x86)\\BRAutomation\\AS6\\bin-en\\AutomationStudio.exe"
+        )
+        tips_text.setWordWrap(True)
+        tips_text.setStyleSheet("color: #34495e; font-size: 12px; padding: 5px;")
+        tips_layout.addWidget(tips_text)
+        
+        layout.addWidget(tips_frame)
         
         # Studio list
         self.studio_list = QListWidget()

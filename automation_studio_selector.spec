@@ -14,7 +14,11 @@ a = Analysis(
     binaries=[],
     datas=[
         ('assets/logo.png', 'assets'),
+        ('assets/Star Wars- The Imperial March .mp3', 'assets'),
+        ('assets/VALHALLA CALLING.mp4', 'assets'),
         ('auto_sync_config_example.xml', '.'),
+        ('MASTER_TUTORIAL.md', '.'),
+        ('MASTER_TUTORIAL_Confluence.html', '.'),
     ],
     hiddenimports=[
         'PyQt6.QtCore',
@@ -24,6 +28,10 @@ a = Analysis(
         'pydantic',
         'pydantic_settings',
         'xml.etree.ElementTree',
+        'urllib',
+        'urllib.parse',
+        'webbrowser',
+        'platform',
     ],
     hookspath=[],
     hooksconfig={},
@@ -60,7 +68,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # You can add an .ico file here if you have one
+    icon='assets/app_icon.ico',  # Application icon
     version='version_info.txt',
 )
 
