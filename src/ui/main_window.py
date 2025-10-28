@@ -1297,13 +1297,14 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About Automation Studio Selector",
-            "Automation Studio Selector v1.2.0\n\n"
+            "Automation Studio Selector v1.3.0\n\n"
             "A professional tool for managing multiple Automation Studio installations\n"
             "and seamlessly switching between project configurations.\n\n"
             "Features:\n"
             "• Support for multiple AS versions (4.5, 6, and more)\n"
             "• Automatic library and configuration management\n"
             "• Prepare-only mode for flexible workflows\n"
+            "• Smart project path auto-detection for scripts\n"
             "• Comprehensive feedback system\n"
             "• Session logging and error handling\n"
             "• Modern, intuitive user interface\n\n"

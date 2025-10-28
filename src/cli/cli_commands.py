@@ -65,8 +65,19 @@ class CLICommands:
             
             # Determine studio (from version or direct path)
             as_version = options.get('as_version')
+            prepare_only = options.get('prepare_only', False)
             
-            if studio_path_str:
+            # For prepare-only mode, we only need AS version, not the studio path
+            if prepare_only and as_version and not studio_path_str and not studio_version:
+                # Create a minimal studio object just for version info (no executable needed)
+                if as_version == '45':
+                    studio = AutomationStudio.create_as45(Path("dummy.exe"))  # Path not used in prepare-only
+                elif as_version == '6':
+                    studio = AutomationStudio.create_as6(Path("dummy.exe"))   # Path not used in prepare-only
+                else:
+                    self._print_error(f"Invalid AS version: {as_version}. Use 45 or 6", silent)
+                    return 4
+            elif studio_path_str:
                 # Direct AS executable path provided - Jenkins/QA scenario
                 studio_exe = Path(studio_path_str)
                 if not studio_exe.exists():
@@ -104,11 +115,13 @@ class CLICommands:
                         self._print_error("No valid studio configuration found", silent)
                         return 4
                 else:
-                    self._print_error("Studio version or path is required", silent)
+                    if prepare_only:
+                        self._print_error("For prepare-only mode, -as-version (45 or 6) is required", silent)
+                    else:
+                        self._print_error("Studio version or path is required", silent)
                     return 4
             
-            # Execute project setup
-            prepare_only = options.get('prepare_only', False)
+            # Execute project setup (prepare_only already set above)
             
             if verbose and not silent:
                 action = "Preparing" if prepare_only else "Opening"
@@ -446,7 +459,7 @@ class CLICommands:
     
     def show_version(self, options: Dict) -> int:
         """Show application version."""
-        print("Automation Studio Selector v1.2.0")
+        print("Automation Studio Selector v1.3.0")
         print("Created by Vitaly Grosman - Indigo R&D Division")
         print("© 2025")
         return 0

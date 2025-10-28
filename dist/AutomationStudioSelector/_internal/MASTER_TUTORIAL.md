@@ -2,7 +2,7 @@
 
 **Professional Tool for Managing Multiple Automation Studio Installations**
 
-**Version**: 1.2.0  
+**Version**: 1.3.0  
 **Created by**: Vitaly Grosman  
 **Organization**: Indigo R&D Division  
 **© 2025**
@@ -68,7 +68,7 @@ The Automation Studio Selector solves a critical problem: managing multiple vers
 
 ### Installation Steps
 
-1. Download `AutomationStudioSelector_Setup_v1.2.0.exe`
+1. Download `AutomationStudioSelector_Setup_v1.3.0.exe`
 2. Right-click → "Run as administrator"
 3. Follow installation wizard
 4. Launch from Start Menu or desktop shortcut

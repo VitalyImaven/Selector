@@ -133,7 +133,7 @@ def markdown_to_confluence_html(markdown_file: Path, html_file: Path):
         <div class="cover-title">Automation Studio Selector</div>
         <div class="cover-subtitle">Complete User Guide</div>
         <div class="cover-info">
-            Version 1.2.0<br>
+            Version 1.3.0<br>
             Created by Vitaly Grosman<br>
             Indigo R&D Division<br>
             © 2025
