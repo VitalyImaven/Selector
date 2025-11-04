@@ -141,6 +141,30 @@ class CLICommands:
             if prepare_only:
                 # Prepare files only, don't launch AS
                 try:
+                    # Check if AS is running
+                    if not silent:
+                        print("Checking for running Automation Studio processes...")
+                    
+                    running_processes = self.project_service.check_automation_studio_running()
+                    if running_processes:
+                        if not silent:
+                            print(f"")
+                            print(f"WARNING: Detected {len(running_processes)} Automation Studio process(es) running!")
+                            print(f"Automation Studio must be closed before preparation to prevent file lock errors.")
+                            print(f"")
+                        
+                        # In silent mode, just close it. Otherwise ask.
+                        if silent:
+                            self.project_service.close_automation_studio_processes(running_processes)
+                        else:
+                            response = input("Close Automation Studio and continue? (yes/no): ").strip().lower()
+                            if response not in ['yes', 'y']:
+                                print("Preparation cancelled.")
+                                return 1
+                            self.project_service.close_automation_studio_processes(running_processes)
+                            print("[OK] Automation Studio closed successfully")
+                            print("")
+                    
                     if not silent:
                         print("[2/5] Clearing Libraries directory...")
                     self.project_service.clear_libraries_directory(project_path)
@@ -175,14 +199,63 @@ class CLICommands:
                             print(f"  -> Or manually launch AS with the project file")
                     
                 except Exception as e:
-                    self._print_error(f"Failed to prepare project: {e}", silent)
+                    if not silent:
+                        print("")
+                        print("=" * 80)
+                        print("[ERROR] PREPARATION FAILED")
+                        print("=" * 80)
+                        print("")
+                        print(f"Error: {e}")
+                        print("")
+                        print("Common causes:")
+                        print("  - Files are locked by another application")
+                        print("  - Automation Studio is still running")
+                        print("  - Missing source files (Libraries_45, Physical_45.pkg, etc.)")
+                        print("  - Insufficient permissions")
+                        print("")
+                        if verbose:
+                            import traceback
+                            print("Full traceback:")
+                            traceback.print_exc()
+                            print("")
+                    logger.error(f"Failed to prepare project: {e}", exc_info=True)
                     return 1
             else:
                 # Full setup with AS launch
-                success = self.project_service.execute_full_project_setup(project_path, studio)
-                
-                if not success:
-                    self._print_error("Failed to open project", silent)
+                try:
+                    success = self.project_service.execute_full_project_setup(project_path, studio)
+                    
+                    if not success:
+                        if not silent:
+                            print("")
+                            print("=" * 80)
+                            print("[ERROR] PROJECT SETUP FAILED")
+                            print("=" * 80)
+                            print("")
+                            print("Check the error details above.")
+                            print("")
+                        return 1
+                except Exception as e:
+                    if not silent:
+                        print("")
+                        print("=" * 80)
+                        print("[ERROR] PROJECT SETUP FAILED")
+                        print("=" * 80)
+                        print("")
+                        print(f"Error: {e}")
+                        print("")
+                        print("Common causes:")
+                        print("  - Files are locked by another application")
+                        print("  - Automation Studio is still running")
+                        print("  - Missing source files (Libraries_45, Physical_45.pkg, etc.)")
+                        print("  - Insufficient permissions")
+                        print("")
+                        if verbose:
+                            import traceback
+                            print("Full traceback:")
+                            traceback.print_exc()
+                            print("")
+                    logger.error(f"Failed to setup project: {e}", exc_info=True)
                     return 1
                 
                 if not silent:
@@ -459,7 +532,7 @@ class CLICommands:
     
     def show_version(self, options: Dict) -> int:
         """Show application version."""
-        print("Automation Studio Selector v1.3.0")
+        print("Automation Studio Selector v1.4.0")
         print("Created by Vitaly Grosman - Indigo R&D Division")
         print("© 2025")
         return 0

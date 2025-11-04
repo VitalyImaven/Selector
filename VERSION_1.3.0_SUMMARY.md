@@ -1,5 +1,8 @@
 # Version 1.3.0 - Quick Summary
 
+> 📥 **Download Now:**  
+> [AutomationStudioSelector_Setup_v1.3.0.exe](https://hp-my.sharepoint.com/:u:/p/vitaly_grosman/EaOKnHUZ1tlKjZGlEk23kRkBwOyI8lmW6uF4e4jWWDVJzg?e=og2YzG)
+
 ## 🎯 Main Feature
 **Smart Project Path Auto-Detection for Batch Scripts**
 

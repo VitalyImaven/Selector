@@ -11,16 +11,16 @@ class AutoSyncSettings:
     """Configuration for automatic file synchronization."""
     
     # Sync triggers
-    sync_on_automation_studio_close: bool = True
-    sync_on_selector_close: bool = True
-    periodic_sync_enabled: bool = True
+    sync_on_automation_studio_close: bool = False
+    sync_on_selector_close: bool = False
+    periodic_sync_enabled: bool = False
     
     # Timing settings
     periodic_sync_interval_minutes: int = 5
     
     # Safety and logging
-    log_sync_operations: bool = True
-    backup_before_sync: bool = True
+    log_sync_operations: bool = False
+    backup_before_sync: bool = False
     max_backups: int = 3
     
     def validate(self) -> bool:

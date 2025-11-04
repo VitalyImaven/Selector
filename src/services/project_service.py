@@ -3,8 +3,10 @@ Business logic for project operations and file management.
 """
 import shutil
 import logging
+import time
 from pathlib import Path
 from typing import Optional, List
+import psutil
 from src.models.automation_studio import AutomationStudio, ProjectPaths
 from src.utils.logger import SessionLogger
 
@@ -23,6 +25,230 @@ class ProjectService:
     def __init__(self, session_logger: Optional[SessionLogger] = None):
         """Initialize project service."""
         self.session_logger = session_logger or SessionLogger()
+    
+    # ----------------------
+    # Process safety helpers
+    # ----------------------
+    def check_automation_studio_running(self) -> List[psutil.Process]:
+        """
+        Check if any Automation Studio processes are currently running.
+        Returns list of running AS processes.
+        """
+        try:
+            logger.info("=== CHECKING FOR AUTOMATION STUDIO PROCESSES ===")
+            found: List[psutil.Process] = []
+            checked_count = 0
+            
+            for proc in psutil.process_iter(['pid', 'name', 'exe']):
+                try:
+                    checked_count += 1
+                    name = (proc.info.get('name') or '').lower()
+                    exe = (str(proc.info.get('exe')) if proc.info.get('exe') else '').lower()
+                    
+                    # Log every process that might be AS
+                    if 'automation' in name or 'automation' in exe:
+                        logger.info(f"  Process check: PID={proc.pid}, name='{name}', exe='{exe}'")
+                    
+                    # Check for Automation Studio processes
+                    # Note: AS4.5 and AS6 use "pg.exe" as the process name, not "AutomationStudio.exe"
+                    # We check for: pg.exe in BR/AS folders
+                    # IMPORTANT: Exclude AutomationStudioSelector.exe (our own app!)
+                    is_as_process = False
+                    
+                    # Skip our own selector app
+                    if 'automationstudioselector' in name or 'automationstudioselector.exe' in exe:
+                        continue
+                    
+                    if name == 'pg.exe' or exe.endswith('\\pg.exe'):
+                        # pg.exe is the actual AS executable - check if it's in a BR/AS path
+                        if 'brautomation' in exe or 'automationstudio' in exe or '\\as' in exe or '\\as4' in exe or '\\as6' in exe:
+                            is_as_process = True
+                    
+                    if is_as_process:
+                        logger.warning(f"  [FOUND AS] PID={proc.pid}, name='{name}', exe='{exe}'")
+                        found.append(proc)
+                        if self.session_logger:
+                            self.session_logger.log_project_operation(
+                                f"Detected AS process",
+                                f"PID {proc.pid}: {name}"
+                            )
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    continue
+            
+            logger.info(f"=== PROCESS CHECK COMPLETE: Checked {checked_count} processes, found {len(found)} AS instances ===")
+            if self.session_logger:
+                self.session_logger.log_project_operation(
+                    "AS process check completed",
+                    f"Found {len(found)} running instances"
+                )
+            return found
+        except Exception as e:
+            logger.error(f"Error checking for AS processes: {e}")
+            if self.session_logger:
+                self.session_logger.log_error("AS process check failed", e)
+            return []
+    
+    def close_automation_studio_processes(self, processes: List[psutil.Process], timeout_seconds: int = 5) -> None:
+        """
+        Close the given Automation Studio processes.
+        Attempts graceful terminate; escalates to kill if needed. Raises on failure.
+        """
+        try:
+            if not processes:
+                logger.info("No processes to close")
+                return
+            
+            logger.info(f"Closing {len(processes)} Automation Studio process(es)")
+            if self.session_logger:
+                self.session_logger.log_project_operation(
+                    "Closing Automation Studio",
+                    f"Processes: {[p.pid for p in processes]}"
+                )
+            
+            # Try graceful terminate first
+            for p in processes:
+                try:
+                    logger.info(f"Terminating process PID={p.pid}")
+                    p.terminate()
+                except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                    logger.warning(f"Could not terminate PID={p.pid}: {e}")
+                    continue
+                except Exception as e:
+                    logger.error(f"Unexpected error terminating PID={p.pid}: {e}")
+                    continue
+            
+            # Wait for termination
+            logger.info(f"Waiting {timeout_seconds}s for processes to close...")
+            end_time = time.time() + timeout_seconds
+            while time.time() < end_time:
+                alive = []
+                for p in processes:
+                    try:
+                        if p.is_running():
+                            alive.append(p)
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+                    except Exception as e:
+                        logger.warning(f"Error checking if PID={p.pid} is running: {e}")
+                        continue
+                if not alive:
+                    logger.info("All processes closed successfully")
+                    break
+                time.sleep(0.2)
+            
+            # Force kill if still alive
+            still_alive = []
+            for p in processes:
+                try:
+                    if p.is_running():
+                        still_alive.append(p)
+                        logger.info(f"Process PID={p.pid} still alive, will force kill")
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+                except Exception as e:
+                    logger.warning(f"Error checking PID={p.pid}: {e}")
+                    continue
+            
+            if still_alive:
+                logger.info(f"Force killing {len(still_alive)} process(es)")
+                for p in still_alive:
+                    try:
+                        logger.info(f"Force killing PID={p.pid}")
+                        p.kill()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
+                        logger.warning(f"Could not kill PID={p.pid}: {e}")
+                        continue
+                    except Exception as e:
+                        logger.error(f"Unexpected error killing PID={p.pid}: {e}")
+                        continue
+                # brief wait
+                time.sleep(0.5)
+                
+                # Final check
+                final_alive = []
+                for p in still_alive:
+                    try:
+                        if p.is_running():
+                            final_alive.append(p)
+                    except:
+                        pass
+                still_alive = final_alive
+            
+            if still_alive:
+                pids = [p.pid for p in still_alive]
+                message = (
+                    "Automation Studio is running and could not be closed automatically. "
+                    "Please close Automation Studio manually and try again."
+                )
+                logger.error(f"AS processes still alive after kill: {pids}")
+                if self.session_logger:
+                    self.session_logger.log_error(message, Exception(f"PIDs: {pids}"))
+                raise ProjectOperationError(message)
+            
+            logger.info("All Automation Studio processes closed successfully")
+            if self.session_logger:
+                self.session_logger.log_project_operation("Automation Studio processes closed successfully")
+        except ProjectOperationError:
+            raise
+        except Exception as e:
+            message = f"Failed to close Automation Studio processes: {e}"
+            logger.error(message, exc_info=True)
+            if self.session_logger:
+                self.session_logger.log_error(message, e)
+            raise ProjectOperationError(message) from e
+    
+    # ----------------------
+    # File operation helpers
+    # ----------------------
+    def _safe_unlink(self, path: Path) -> None:
+        """Delete a file; raise helpful error if locked/in-use."""
+        try:
+            path.unlink()
+        except PermissionError as e:
+            msg = (
+                f"Cannot delete file: {path}. The file is in use or locked by another application. "
+                "Please ensure Automation Studio is closed and try again."
+            )
+            logger.error(msg)
+            if self.session_logger:
+                self.session_logger.log_error(msg, e)
+            raise ProjectOperationError(msg) from e
+        except OSError as e:
+            if getattr(e, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
+                msg = (
+                    f"Cannot delete file: {path}. The file is currently in use. "
+                    "Close Automation Studio or any program using the file and retry."
+                )
+                logger.error(msg)
+                if self.session_logger:
+                    self.session_logger.log_error(msg, e)
+                raise ProjectOperationError(msg) from e
+            raise
+    
+    def _safe_rmtree(self, path: Path) -> None:
+        """Recursively delete a directory; raise helpful error if locked/in-use."""
+        try:
+            shutil.rmtree(path)
+        except PermissionError as e:
+            msg = (
+                f"Cannot delete directory: {path}. One or more items are in use or locked by another application. "
+                "Please ensure Automation Studio is closed and try again."
+            )
+            logger.error(msg)
+            if self.session_logger:
+                self.session_logger.log_error(msg, e)
+            raise ProjectOperationError(msg) from e
+        except OSError as e:
+            if getattr(e, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
+                msg = (
+                    f"Cannot delete directory: {path}. Files appear to be in use. "
+                    "Close Automation Studio or any program using the Libraries and retry."
+                )
+                logger.error(msg)
+                if self.session_logger:
+                    self.session_logger.log_error(msg, e)
+                raise ProjectOperationError(msg) from e
+            raise
     
     def validate_project_structure(self, project_root: Path) -> bool:
         """
@@ -73,10 +299,10 @@ class ProjectService:
                 # Remove all contents
                 for item in paths.libraries_path.iterdir():
                     if item.is_dir():
-                        shutil.rmtree(item)
+                        self._safe_rmtree(item)
                         self.session_logger.log_file_operation("Directory deleted", str(item))
                     else:
-                        item.unlink()
+                        self._safe_unlink(item)
                         self.session_logger.log_file_operation("File deleted", str(item))
                 
                 logger.info(f"Libraries directory cleared: {paths.libraries_path}")
@@ -121,7 +347,7 @@ class ProjectService:
                 if item.is_dir():
                     target_item = target_dir / item.name
                     if target_item.exists():
-                        shutil.rmtree(target_item)
+                        self._safe_rmtree(target_item)
                     shutil.copytree(item, target_item)
                     self.session_logger.log_file_operation("Directory copied", str(item), str(target_item))
                 else:
@@ -163,7 +389,7 @@ class ProjectService:
             
             # Remove existing Physical.pkg if it exists
             if target_file.exists():
-                target_file.unlink()
+                self._safe_unlink(target_file)
                 self.session_logger.log_file_operation("File deleted", str(target_file))
             
             # Copy version-specific file to Physical.pkg
@@ -202,7 +428,7 @@ class ProjectService:
             
             # Remove existing OCB.apj if it exists
             if target_file.exists():
-                target_file.unlink()
+                self._safe_unlink(target_file)
                 self.session_logger.log_file_operation("File deleted", str(target_file))
             
             # Copy version-specific file to OCB.apj

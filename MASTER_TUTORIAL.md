@@ -44,6 +44,35 @@ The Automation Studio Selector solves a critical problem: managing multiple vers
 - Never lose work with auto-sync
 - Professional, enterprise-ready tool
 
+### OCB Project Background - Moving to AS6
+
+> **Why OCB Needs Dual AS4.5/AS6 Support**
+
+**The Transition:**
+- AS 4.5 is moving toward End of Life (EOL)
+- Main PLC S4-5 configurations are transforming to AS6: **Hila_MR / Sufa (unified) / Ayala**
+- However, most PLC configurations will remain with AS4.5 for compatibility reasons
+
+**Configurations Remaining on AS4.5:**
+- **Arad ECO/ECO** – Not supported by AS6
+- **Stacker/Jigs/TBs** – Not supported by AS6
+- **Eilat MR2 / Shani / Barak / Tamar** – Remaining on AS4.5
+
+**Why One Unified OCB?**
+- The alternative option of maintaining **two different OCBs** was declined
+- Reason: Excessive maintenance overhead
+- Solution: **OCB must support both AS4.5 and AS6 configurations** in a single project
+
+> ✅ **The Automation Studio Selector** enables this unified approach by automatically switching between AS versions without maintaining separate OCB projects!
+
+**Project Architecture:**
+- **AS4.5 Libraries** → Libraries (switchable)
+- **AS6 Libraries** → Libraries (switchable)
+- **AS4.5 Physical**: Shani, Arad_ECO, TAMAR_MR, Physical.pkg
+- **AS6 Physical**: AYALA, HILA_MR, SUFA, Physical.pkg
+- **SLC Repository**: SLC_SHANI_MR, SLC_BARAK_SPARK, SLC_HILA_ORA2 projects
+- **Unified OCB.apj** with both AS4.5 and AS6 variants
+
 ### Key Features
 
 - ✅ Support for multiple AS versions (4.5, 6, and future versions)
@@ -51,6 +80,8 @@ The Automation Studio Selector solves a critical problem: managing multiple vers
 - ✅ Automatic library and configuration switching
 - ✅ Auto-sync system (every 5 minutes, on AS close, on app close)
 - ✅ Command-line interface for automation
+- ✅ **Smart project path auto-detection for scripts (v1.3.0)**
+- ✅ **Simplified prepare-only mode - no studio path needed! (v1.3.0)**
 - ✅ Jenkins/CI-CD ready
 - ✅ Comprehensive logging
 - ✅ Professional UI with modern design
@@ -68,10 +99,13 @@ The Automation Studio Selector solves a critical problem: managing multiple vers
 
 ### Installation Steps
 
-1. Download `AutomationStudioSelector_Setup_v1.3.0.exe`
+1. **Download**: [AutomationStudioSelector_Setup_v1.3.0.exe](https://hp-my.sharepoint.com/:u:/p/vitaly_grosman/EaOKnHUZ1tlKjZGlEk23kRkBwOyI8lmW6uF4e4jWWDVJzg?e=og2YzG)
 2. Right-click → "Run as administrator"
 3. Follow installation wizard
 4. Launch from Start Menu or desktop shortcut
+
+> 📥 **Download Link:**  
+> https://hp-my.sharepoint.com/:u:/p/vitaly_grosman/EaOKnHUZ1tlKjZGlEk23kRkBwOyI8lmW6uF4e4jWWDVJzg?e=og2YzG
 
 ### Installation Locations
 
@@ -162,7 +196,42 @@ After setup closes:
 
 ## Daily Usage
 
-### Basic Workflow
+### Quick Start with Scripts (NEW v1.3.0 - Recommended!)
+
+> 🚀 **Fastest Way!** Your OCB project now includes ready-to-use scripts in the `\scripts` directory!
+
+**In your project directory, you'll find:**
+
+```
+OCB/
+├── scripts/
+│   ├── prepare45.bat    ← Double-click for AS 4.5
+│   └── prepare6.bat     ← Double-click for AS 6
+├── Logical/
+├── Physical/
+└── OCB.apj
+```
+
+**How to use:**
+
+1. **For AS 4.5**: Navigate to `OCB\scripts\` and double-click `prepare45.bat`
+2. **For AS 6**: Navigate to `OCB\scripts\` and double-click `prepare6.bat`
+3. The script automatically detects the project path and converts all files
+4. Wait for "Project ready for AS X.X" message
+5. Done! Your project is now configured
+
+**What happens:**
+
+- ✅ Automatically detects project path (parent directory of scripts)
+- ✅ Copies correct libraries (Libraries_45 or Libraries_6)
+- ✅ Updates Physical.pkg file
+- ✅ Updates OCB.apj file
+- ✅ Ready to open in Automation Studio!
+
+> 💡 **Tip:** You can run these scripts anytime to switch between AS versions. No GUI needed!  
+> This uses the new v1.3.0 smart path detection feature.
+
+### Basic Workflow (Using GUI)
 
 1. **Select Project**: Click on project in list
 2. **Select AS Version**: Click on AS 4.5 or AS 6
@@ -171,6 +240,14 @@ After setup closes:
 5. **Auto-Sync**: Changes saved automatically
 
 ### Switching Versions
+
+**Method 1: Using Scripts (Quick!)**
+
+1. Go to your project's `\scripts` directory
+2. Double-click `prepare45.bat` or `prepare6.bat`
+3. Done! Project converted
+
+**Method 2: Using GUI**
 
 1. Close Automation Studio
 2. Select different AS version in Selector
@@ -346,12 +423,13 @@ python main.py -project-path "C:\Project" -studio-path "C:\AS45\exe" -as-version
 
 ## Jenkins & CI/CD Integration
 
-### The Complete Jenkins Command
+> **v1.3.0 Update:** Jenkins scripts are now simpler! No `-studio-path` needed for prepare-only mode.
+
+### The Complete Jenkins Command (v1.3.0 - Simplified!)
 
 ```batch
 python main.py ^
   -project-path "%WORKSPACE%" ^
-  -studio-path "C:\BrAutomation\AS45\Bin-en\AutomationStudio.exe" ^
   -as-version 45 ^
   -prepare-only ^
   -silent
@@ -359,25 +437,24 @@ python main.py ^
 
 ### Critical Parameters
 
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `-project-path` | Where Git cloned your project | `%WORKSPACE%` |
-| `-studio-path` | Full path to AS executable | `C:\AS45\AutomationStudio.exe` |
-| `-as-version` | `45` or `6` (which files to copy) | `45` |
-| `-prepare-only` | Don't launch AS | (flag) |
-| `-silent` | No console output | (flag) |
+| Parameter | Description | Example | Required |
+|-----------|-------------|---------|----------|
+| `-project-path` | Where Git cloned your project | `%WORKSPACE%` | Yes |
+| `-as-version` | `45` or `6` (which files to copy) | `45` | Yes |
+| `-prepare-only` | Don't launch AS | (flag) | For Jenkins |
+| `-silent` | No console output | (flag) | Recommended |
+| ~~`-studio-path`~~ | ~~Full path to AS executable~~ | ~~(not needed for prepare-only!)~~ | **NO** |
 
-### Complete Jenkins Script
+### Complete Jenkins Script (v1.3.0)
 
 ```batch
 @echo off
-REM Jenkins Build Script
+REM Jenkins Build Script for AS 4.5
 
 echo Configuring AS project from Git...
 
 python C:\Tools\Selector\main.py ^
   -project-path "%WORKSPACE%" ^
-  -studio-path "C:\BrAutomation\AS45\Bin-en\AutomationStudio.exe" ^
   -as-version 45 ^
   -prepare-only ^
   -silent
@@ -385,11 +462,56 @@ python C:\Tools\Selector\main.py ^
 if %errorlevel% equ 0 (
     echo [OK] Project configured for AS 4.5
     REM Add your build commands here
+    REM Example: call "C:\BrAutomation\AS45\Bin-en\BR.AS.Build.exe" "%WORKSPACE%\Project.apj"
 ) else (
     echo [ERROR] Configuration failed
     exit /b 1
 )
 ```
+
+### Running from Project \scripts Directory (v1.3.0)
+
+**NEW in v1.3.0:** Place scripts inside your project for portability!
+
+```
+YourProject/
+├── scripts/
+│   ├── prepare_as45.bat
+│   └── prepare_as6.bat
+├── Logical/
+│   ├── Libraries_45/
+│   └── Libraries_6/
+├── Physical/
+└── Project.apj
+```
+
+**Example prepare_as45.bat:**
+
+```batch
+@echo off
+REM Script automatically detects project path from parent directory
+
+set "SCRIPT_DIR=%~dp0"
+set "PROJECT_DIR=%SCRIPT_DIR%\.."
+
+python "C:\Tools\Selector\main.py" ^
+  -project-path "%PROJECT_DIR%" ^
+  -as-version 45 ^
+  -prepare-only
+
+if %errorlevel% equ 0 (
+    echo Project ready for AS 4.5!
+) else (
+    echo Configuration failed!
+    exit /b 1
+)
+```
+
+**Benefits:**
+- ✅ Scripts travel with your project in Git
+- ✅ No path hardcoding needed
+- ✅ Works on any developer's machine
+- ✅ Perfect for team collaboration
 
 ### Why This Works Without GUI
 

@@ -6,6 +6,16 @@
 
 ## 🎯 What's New in Version 1.3.0
 
+### 📋 OCB Project Context
+
+The OCB project requires dual AS4.5/AS6 support due to:
+- **AS 4.5 moving toward EOL**, but many configurations cannot migrate
+- **Main configurations moving to AS6**: Hila_MR, Sufa (unified), Ayala
+- **Configurations staying on AS4.5**: Arad ECO, Stacker/Jigs/TBs, Eilat MR2, Shani, Barak, Tamar
+- **Single unified OCB approach** chosen over maintaining two separate projects to reduce overhead
+
+Version 1.3.0 makes this dual-version workflow seamless with smart scripts and simplified commands.
+
 ### 🚀 Major Feature: Smart Project Path Auto-Detection
 
 Version 1.3.0 introduces **intelligent project path detection** for batch scripts, making it easier to use the tool in different environments without hardcoding paths.
@@ -19,6 +29,32 @@ Version 1.3.0 introduces **intelligent project path detection** for batch script
 ---
 
 ## 📝 Detailed Changes
+
+### OCB Project Ready-to-Use Scripts
+
+Your OCB project now includes two convenient scripts in the `\scripts` directory:
+
+**Location:** `OCB\scripts\`
+- **prepare45.bat** - Double-click to convert project to AS 4.5
+- **prepare6.bat** - Double-click to convert project to AS 6
+
+**How it works:**
+1. Navigate to your `OCB\scripts\` directory
+2. Double-click `prepare45.bat` (for AS 4.5) or `prepare6.bat` (for AS 6)
+3. The script automatically:
+   - Detects the project path (parent directory)
+   - Copies the correct libraries
+   - Updates Physical.pkg
+   - Updates OCB.apj
+4. Wait for "Project ready!" message
+5. Done! Your project is converted
+
+**Benefits:**
+- ✅ No need to specify project path - auto-detected!
+- ✅ No need to specify studio path - prepare-only mode!
+- ✅ Just double-click and go
+- ✅ Scripts travel with your project in Git
+- ✅ Works on any machine
 
 ### Enhanced Batch Scripts
 Both `test45.bat` and `test6.bat` now include:
@@ -135,9 +171,13 @@ Please either:
    - Update the `DEFAULT_PROJECT_PATH` variable if your path differs
 
 ### For New Users
-1. Install version 1.3.0 using the installer: `AutomationStudioSelector_Setup_v1.3.0.exe`
-2. Copy the example scripts to your project's `\scripts` directory
-3. Run them without any modifications!
+1. **Download** the installer: [AutomationStudioSelector_Setup_v1.3.0.exe](https://hp-my.sharepoint.com/:u:/p/vitaly_grosman/EaOKnHUZ1tlKjZGlEk23kRkBwOyI8lmW6uF4e4jWWDVJzg?e=og2YzG)
+2. Install version 1.3.0 using the installer
+3. Copy the example scripts to your project's `\scripts` directory
+4. Run them without any modifications!
+
+> 📥 **Download Link:**  
+> https://hp-my.sharepoint.com/:u:/p/vitaly_grosman/EaOKnHUZ1tlKjZGlEk23kRkBwOyI8lmW6uF4e4jWWDVJzg?e=og2YzG
 
 ---
 

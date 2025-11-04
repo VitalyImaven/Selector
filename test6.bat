@@ -1,6 +1,6 @@
 @echo off
 REM Build script for AS6 project
-REM Version 1.3.0 - Enhanced with auto-detection of project path
+REM Version 1.4.0 - Enhanced with AS process checking and error reporting
 
 echo ========================================
 echo  Configuring AS6 Project

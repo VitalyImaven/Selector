@@ -33,15 +33,15 @@ class SyncConfigService:
                 # Sync triggers
                 studio_close_elem = root.find('SyncOnAutomationStudioClose')
                 if studio_close_elem is not None:
-                    settings.sync_on_automation_studio_close = studio_close_elem.get('enabled', 'true').lower() == 'true'
+                    settings.sync_on_automation_studio_close = studio_close_elem.get('enabled', 'false').lower() == 'true'
                 
                 selector_close_elem = root.find('SyncOnSelectorClose')
                 if selector_close_elem is not None:
-                    settings.sync_on_selector_close = selector_close_elem.get('enabled', 'true').lower() == 'true'
+                    settings.sync_on_selector_close = selector_close_elem.get('enabled', 'false').lower() == 'true'
                 
                 periodic_elem = root.find('PeriodicSync')
                 if periodic_elem is not None:
-                    settings.periodic_sync_enabled = periodic_elem.get('enabled', 'true').lower() == 'true'
+                    settings.periodic_sync_enabled = periodic_elem.get('enabled', 'false').lower() == 'true'
                     try:
                         settings.periodic_sync_interval_minutes = int(periodic_elem.get('intervalMinutes', '5'))
                     except ValueError:
@@ -50,11 +50,11 @@ class SyncConfigService:
                 # Logging and backup
                 logging_elem = root.find('LogSyncOperations')
                 if logging_elem is not None:
-                    settings.log_sync_operations = logging_elem.get('enabled', 'true').lower() == 'true'
+                    settings.log_sync_operations = logging_elem.get('enabled', 'false').lower() == 'true'
                 
                 backup_elem = root.find('BackupBeforeSync')
                 if backup_elem is not None:
-                    settings.backup_before_sync = backup_elem.get('enabled', 'true').lower() == 'true'
+                    settings.backup_before_sync = backup_elem.get('enabled', 'false').lower() == 'true'
                     try:
                         settings.max_backups = int(backup_elem.get('maxBackups', '3'))
                     except ValueError:

@@ -289,9 +289,9 @@ class SyncSettingsDialog(QDialog):
                 "Reset to Defaults",
                 "Are you sure you want to reset all auto-sync settings to their default values?\n\n"
                 "This will:\n"
-                "• Enable all sync triggers\n"
-                "• Set periodic sync to 5 minutes\n"
-                "• Enable logging and backups\n"
+                "• Disable all sync triggers\n"
+                "• Set periodic sync to Disabled (interval kept at 5 minutes)\n"
+                "• Disable logging and backups\n"
                 "• Set max backups to 3",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No

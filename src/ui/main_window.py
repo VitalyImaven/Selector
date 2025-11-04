@@ -863,6 +863,66 @@ class MainWindow(QMainWindow):
                 )
                 return
             
+            # Check if Automation Studio is running
+            self.log_message(">>> Checking for running Automation Studio processes...")
+            logger.info("UI: Starting AS process check before preparation")
+            
+            running_processes = self.project_service.check_automation_studio_running()
+            
+            logger.info(f"UI: Process check returned {len(running_processes)} processes")
+            self.log_message(f">>> Process check: found {len(running_processes)} AS process(es)")
+            
+            if running_processes:
+                logger.warning(f"UI: Found {len(running_processes)} running AS processes - showing warning dialog")
+                self.log_message(f"⚠ WARNING: {len(running_processes)} Automation Studio process(es) detected!")
+                
+                reply = QMessageBox.warning(
+                    self,
+                    "Automation Studio is Running",
+                    f"Detected {len(running_processes)} Automation Studio process(es) currently running.\n\n"
+                    "To prepare the project, Automation Studio must be closed first.\n"
+                    "This will prevent file lock errors during preparation.\n\n"
+                    "Do you want to close Automation Studio now and continue?\n\n"
+                    "Click 'Yes' to close AS and continue\n"
+                    "Click 'No' to cancel",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
+                )
+                
+                logger.info(f"UI: User dialog response: {'Yes' if reply == QMessageBox.StandardButton.Yes else 'No'}")
+                
+                if reply == QMessageBox.StandardButton.No:
+                    logger.info("UI: User cancelled preparation due to running AS")
+                    self.log_message("✗ Preparation cancelled - Automation Studio still running")
+                    return
+                
+                # User agreed - close the processes
+                try:
+                    logger.info("UI: User agreed to close AS - attempting to close processes")
+                    self.log_message(">>> Closing Automation Studio processes...")
+                    self.project_service.close_automation_studio_processes(running_processes)
+                    logger.info("UI: AS processes closed successfully")
+                    self.log_message("✓ Automation Studio closed successfully")
+                    
+                    # Wait for Windows to release file handles
+                    import time
+                    self.log_message(">>> Waiting for file locks to release...")
+                    time.sleep(2)  # Give Windows time to release file locks
+                    self.log_message("✓ Ready to proceed")
+                except Exception as e:
+                    logger.error(f"UI: Failed to close AS processes: {e}")
+                    QMessageBox.critical(
+                        self,
+                        "Failed to Close Automation Studio",
+                        f"Could not close Automation Studio:\n\n{str(e)}\n\n"
+                        "Please close Automation Studio manually and try again."
+                    )
+                    self.log_message(f"✗ Failed to close AS: {e}")
+                    return
+            else:
+                logger.info("UI: No running AS processes detected - proceeding with preparation")
+                self.log_message("✓ No running AS processes detected")
+            
             # Get checkbox state
             launch_as = self.launch_as_checkbox.isChecked()
             
@@ -908,13 +968,16 @@ class MainWindow(QMainWindow):
                 self.log_message("✓ " + message)
             else:
                 self.status_bar.showMessage("Operation failed")
-                self.log_message("✗ " + message)
+                self.log_message("✗ OPERATION FAILED")
+                self.log_message(f"✗ Error details: {message}")
+                logger.error(f"Operation failed: {message}")
                 
-                # Show error message
+                # Show error message with full details
                 QMessageBox.critical(
                     self,
                     "Operation Failed",
-                    f"Failed to open project:\n\n{message}"
+                    f"Failed to prepare project:\n\n{message}\n\n"
+                    f"Check the Session Log for more details."
                 )
                 
         except Exception as e:
@@ -1212,11 +1275,11 @@ class MainWindow(QMainWindow):
             app_config.append("AUTO-SYNC SETTINGS:")
             try:
                 sync_settings = self.auto_sync_manager.config_service.load_settings()
-                app_config.append(f"  Sync on AS close: {sync_settings.sync_on_as_close}")
-                app_config.append(f"  Sync on app close: {sync_settings.sync_on_app_close}")
+                app_config.append(f"  Sync on AS close: {sync_settings.sync_on_automation_studio_close}")
+                app_config.append(f"  Sync on app close: {sync_settings.sync_on_selector_close}")
                 app_config.append(f"  Periodic sync enabled: {sync_settings.periodic_sync_enabled}")
-                app_config.append(f"  Sync interval: {sync_settings.sync_interval_minutes} minutes")
-                app_config.append(f"  Create backups: {sync_settings.create_backups}")
+                app_config.append(f"  Sync interval: {sync_settings.periodic_sync_interval_minutes} minutes")
+                app_config.append(f"  Create backups: {sync_settings.backup_before_sync}")
                 app_config.append(f"  Max backups: {sync_settings.max_backups}")
                 app_config.append(f"  Log sync operations: {sync_settings.log_sync_operations}")
             except Exception as e:
@@ -1297,7 +1360,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About Automation Studio Selector",
-            "Automation Studio Selector v1.3.0\n\n"
+            "Automation Studio Selector v1.4.0\n\n"
             "A professional tool for managing multiple Automation Studio installations\n"
             "and seamlessly switching between project configurations.\n\n"
             "Features:\n"
@@ -1306,6 +1369,7 @@ class MainWindow(QMainWindow):
             "• Prepare-only mode for flexible workflows\n"
             "• Smart project path auto-detection for scripts\n"
             "• Comprehensive feedback system\n"
+            "• Auto-close Automation Studio before preparation\n"
             "• Session logging and error handling\n"
             "• Modern, intuitive user interface\n\n"
             "Created by Vitaly Grosman\n\n"
