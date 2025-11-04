@@ -70,6 +70,19 @@ echo Configuring AS45 project for AS 4.5...
 echo Project path: %PROJECT_PATH%
 echo.
 
+REM Close any running Automation Studio processes before preparation
+echo Checking for running Automation Studio (pg.exe) processes...
+tasklist /FI "IMAGENAME eq pg.exe" 2>NUL | find /I /N "pg.exe">NUL
+if "%ERRORLEVEL%"=="0" (
+    echo Found running Automation Studio - closing all instances...
+    taskkill /F /IM pg.exe >NUL 2>&1
+    timeout /t 2 /nobreak >NUL
+    echo Automation Studio closed.
+) else (
+    echo No Automation Studio processes detected.
+)
+echo.
+
 python "C:\Work\Indigo\Python\Selector\Selector\main.py" ^
   -project-path "%PROJECT_PATH%" ^
   -as-version 45 ^
