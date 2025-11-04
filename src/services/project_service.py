@@ -4,6 +4,7 @@ Business logic for project operations and file management.
 import shutil
 import logging
 import time
+import subprocess
 from pathlib import Path
 from typing import Optional, List
 import psutil
@@ -29,6 +30,109 @@ class ProjectService:
     # ----------------------
     # Process safety helpers
     # ----------------------
+    def _check_antivirus_running(self) -> str:
+        """Check if common antivirus processes are running."""
+        try:
+            antivirus_processes = []
+            antivirus_names = ['msmpeng', 'mssense', 'avast', 'avg', 'norton', 'mcafee', 
+                              'kaspersky', 'defender', 'windowsdefender', 'sophossps']
+            
+            for proc in psutil.process_iter(['name']):
+                try:
+                    name = proc.info['name'].lower()
+                    for av_name in antivirus_names:
+                        if av_name in name:
+                            antivirus_processes.append(proc.info['name'])
+                            break
+                except:
+                    continue
+            
+            if antivirus_processes:
+                av_list = ", ".join(set(antivirus_processes[:3]))
+                return f"\n\n⚠ ANTIVIRUS DETECTED: {av_list}\n   This may be scanning and locking the files.\n"
+            return ""
+        except:
+            return ""
+    
+    def find_locking_processes(self, path: Path) -> str:
+        """
+        Find which processes have handles to files in the given path.
+        Returns a formatted string with process information.
+        """
+        locking_info_parts = []
+        
+        try:
+            logger.info(f"Attempting to identify processes locking: {path}")
+            
+            # Method 1: psutil open_files (most accurate but needs permissions)
+            locking_procs = []
+            path_str = str(path).lower()
+            checked = 0
+            
+            for proc in psutil.process_iter(['pid', 'name']):
+                try:
+                    checked += 1
+                    # Check if process has any open files in this directory
+                    open_files = proc.open_files()
+                    for f in open_files:
+                        if path_str in f.path.lower():
+                            proc_info = f"{proc.info['name']} (PID: {proc.info['pid']})"
+                            locking_procs.append(proc_info)
+                            logger.info(f"  Found locking process: {proc_info}")
+                            break
+                except psutil.AccessDenied:
+                    continue  # No permission to check this process
+                except (psutil.NoSuchProcess, AttributeError):
+                    continue
+                except Exception as e:
+                    logger.debug(f"  Error checking process: {e}")
+                    continue
+            
+            logger.info(f"Checked {checked} processes with psutil, found {len(locking_procs)} locking")
+            
+            if locking_procs:
+                processes_list = "\n  • ".join(locking_procs[:10])  # Show max 10
+                locking_info_parts.append(f"\n\n⚠ FILES LOCKED BY THESE PROCESSES:\n  • {processes_list}")
+            
+            # Method 2: Use Windows Handle tool via PowerShell (if available)
+            # This works even without admin on newer Windows
+            try:
+                ps_script = f"""
+$path = "{path}"
+Get-Process | ForEach-Object {{
+    try {{
+        $proc = $_
+        $proc.Modules | Where-Object {{$_.FileName -like "*$($path.Split('\\')[-1])*"}} | ForEach-Object {{
+            Write-Output "$($proc.ProcessName) (PID: $($proc.Id))"
+        }}
+    }} catch {{}}
+}} | Select-Object -First 5 -Unique
+"""
+                result = subprocess.run(
+                    ['powershell', '-NoProfile', '-Command', ps_script],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                )
+                
+                if result.stdout.strip() and not locking_procs:  # Only show if psutil didn't find anything
+                    logger.info(f"PowerShell found: {result.stdout.strip()}")
+                    locking_info_parts.append(f"\n\n⚠ POSSIBLY LOCKED BY:\n{result.stdout.strip()}")
+            except Exception as e:
+                logger.debug(f"PowerShell method failed: {e}")
+            
+            if not locking_info_parts:
+                logger.warning("Could not identify any locking processes using available methods")
+                # Return helpful tip
+                return "\n\n💡 TIP: Open Task Manager and look for processes with files open in this folder."
+            
+            return "".join(locking_info_parts)
+            
+        except Exception as e:
+            logger.error(f"Error in find_locking_processes: {e}", exc_info=True)
+            return ""
+    
     def check_automation_studio_running(self) -> List[psutil.Process]:
         """
         Check if any Automation Studio processes are currently running.
@@ -200,55 +304,115 @@ class ProjectService:
     # ----------------------
     # File operation helpers
     # ----------------------
-    def _safe_unlink(self, path: Path) -> None:
-        """Delete a file; raise helpful error if locked/in-use."""
-        try:
-            path.unlink()
-        except PermissionError as e:
-            msg = (
-                f"Cannot delete file: {path}. The file is in use or locked by another application. "
-                "Please ensure Automation Studio is closed and try again."
-            )
-            logger.error(msg)
-            if self.session_logger:
-                self.session_logger.log_error(msg, e)
-            raise ProjectOperationError(msg) from e
-        except OSError as e:
-            if getattr(e, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
-                msg = (
-                    f"Cannot delete file: {path}. The file is currently in use. "
-                    "Close Automation Studio or any program using the file and retry."
-                )
-                logger.error(msg)
-                if self.session_logger:
-                    self.session_logger.log_error(msg, e)
-                raise ProjectOperationError(msg) from e
-            raise
+    def _safe_unlink(self, path: Path, max_retries: int = 3) -> None:
+        """Delete a file; retry on transient locks; raise helpful error if locked/in-use."""
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                path.unlink()
+                if attempt > 0:
+                    logger.info(f"Successfully deleted {path} on attempt {attempt + 1}")
+                return  # Success
+            except PermissionError as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    wait_time = 0.5 * (2 ** attempt)  # 0.5s, 1s, 2s
+                    logger.warning(f"Attempt {attempt + 1}/{max_retries}: Cannot delete {path}, retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                else:
+                    msg = (
+                        f"Cannot delete file: {path}. The file is in use or locked by another application. "
+                        "Please ensure Automation Studio is closed and try again."
+                    )
+                    logger.error(msg)
+                    if self.session_logger:
+                        self.session_logger.log_error(msg, e)
+                    raise ProjectOperationError(msg) from e
+            except OSError as e:
+                last_error = e
+                if getattr(e, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
+                    if attempt < max_retries - 1:
+                        wait_time = 0.5 * (2 ** attempt)
+                        logger.warning(f"Attempt {attempt + 1}/{max_retries}: File sharing violation on {path}, retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        msg = (
+                            f"Cannot delete file: {path}. The file is currently in use. "
+                            "Close Automation Studio or any program using the file and retry."
+                        )
+                        logger.error(msg)
+                        if self.session_logger:
+                            self.session_logger.log_error(msg, e)
+                        raise ProjectOperationError(msg) from e
+                else:
+                    raise
     
-    def _safe_rmtree(self, path: Path) -> None:
-        """Recursively delete a directory; raise helpful error if locked/in-use."""
-        try:
-            shutil.rmtree(path)
-        except PermissionError as e:
-            msg = (
-                f"Cannot delete directory: {path}. One or more items are in use or locked by another application. "
-                "Please ensure Automation Studio is closed and try again."
-            )
-            logger.error(msg)
-            if self.session_logger:
-                self.session_logger.log_error(msg, e)
-            raise ProjectOperationError(msg) from e
-        except OSError as e:
-            if getattr(e, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
-                msg = (
-                    f"Cannot delete directory: {path}. Files appear to be in use. "
-                    "Close Automation Studio or any program using the Libraries and retry."
-                )
-                logger.error(msg)
-                if self.session_logger:
-                    self.session_logger.log_error(msg, e)
-                raise ProjectOperationError(msg) from e
-            raise
+    def _safe_rmtree(self, path: Path, max_retries: int = 3) -> None:
+        """Recursively delete a directory; retry on transient locks; raise helpful error if locked/in-use."""
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                shutil.rmtree(path)
+                if attempt > 0:
+                    logger.info(f"Successfully deleted {path} on attempt {attempt + 1}")
+                    if self.session_logger:
+                        self.session_logger.log_file_operation("Directory deleted (after retry)", str(path))
+                return  # Success
+            except PermissionError as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    wait_time = 0.5 * (2 ** attempt)  # 0.5s, 1s
+                    logger.warning(f"Attempt {attempt + 1}/{max_retries}: Cannot delete {path}, retrying in {wait_time}s...")
+                    if self.session_logger:
+                        self.session_logger.log_file_operation(f"Retry {attempt + 1}/{max_retries}", f"Waiting {wait_time}s")
+                    time.sleep(wait_time)
+                else:
+                    # Try to find what's locking it
+                    locking_info = self.find_locking_processes(path)
+                    
+                    # Check for common antivirus processes
+                    antivirus_hint = self._check_antivirus_running()
+                    
+                    msg = (
+                        f"Cannot delete directory: {path}\n\n"
+                        f"One or more items are in use or locked by another application.\n"
+                        "This could be caused by:\n"
+                        "• Automation Studio still running (check Task Manager for pg.exe)\n"
+                        "• Windows Explorer viewing the folder\n"
+                        "• Antivirus/Windows Defender scanning the files\n"
+                        "• File indexing service (SearchIndexer)\n"
+                        f"{antivirus_hint}"
+                        f"{locking_info}\n\n"
+                        "Please try:\n"
+                        "1. Wait a moment and click Prepare again\n"
+                        "2. Temporarily disable antivirus real-time protection\n"
+                        "3. Close Windows Explorer in this folder\n"
+                        "4. Check Task Manager for any processes using the files"
+                    )
+                    logger.error(msg)
+                    if self.session_logger:
+                        self.session_logger.log_error(msg, e)
+                    raise ProjectOperationError(msg) from e
+            except OSError as e:
+                last_error = e
+                if getattr(e, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
+                    if attempt < max_retries - 1:
+                        wait_time = 0.5 * (2 ** attempt)
+                        logger.warning(f"Attempt {attempt + 1}/{max_retries}: File sharing violation on {path}, retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        msg = (
+                            f"Cannot delete directory: {path}. Files appear to be in use. "
+                            "Close Automation Studio, Windows Explorer, or any program using the Libraries and retry."
+                        )
+                        logger.error(msg)
+                        if self.session_logger:
+                            self.session_logger.log_error(msg, e)
+                        raise ProjectOperationError(msg) from e
+                else:
+                    raise
     
     def validate_project_structure(self, project_root: Path) -> bool:
         """

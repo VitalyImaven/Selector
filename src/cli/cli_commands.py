@@ -532,7 +532,7 @@ class CLICommands:
     
     def show_version(self, options: Dict) -> int:
         """Show application version."""
-        print("Automation Studio Selector v1.4.0")
+        print("Automation Studio Selector v1.5.0")
         print("Created by Vitaly Grosman - Indigo R&D Division")
         print("© 2025")
         return 0

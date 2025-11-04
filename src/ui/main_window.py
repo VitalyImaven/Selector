@@ -972,13 +972,33 @@ class MainWindow(QMainWindow):
                 self.log_message(f"✗ Error details: {message}")
                 logger.error(f"Operation failed: {message}")
                 
-                # Show error message with full details
-                QMessageBox.critical(
-                    self,
-                    "Operation Failed",
-                    f"Failed to prepare project:\n\n{message}\n\n"
-                    f"Check the Session Log for more details."
-                )
+                # Show error message with Retry option if it's a lock error
+                if "locked" in message.lower() or "in use" in message.lower():
+                    reply = QMessageBox.critical(
+                        self,
+                        "Operation Failed - Files Locked",
+                        f"Failed to prepare project:\n\n{message}\n\n"
+                        f"This is often caused by antivirus scanning.\n\n"
+                        f"Check the Session Log for more details.\n\n"
+                        f"Would you like to retry now?",
+                        QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Cancel,
+                        QMessageBox.StandardButton.Retry
+                    )
+                    
+                    if reply == QMessageBox.StandardButton.Retry:
+                        self.log_message("User requested retry - attempting again...")
+                        # Wait a bit before retry
+                        import time
+                        time.sleep(1)
+                        # Trigger prepare again
+                        self.open_selected_project()
+                else:
+                    QMessageBox.critical(
+                        self,
+                        "Operation Failed",
+                        f"Failed to prepare project:\n\n{message}\n\n"
+                        f"Check the Session Log for more details."
+                    )
                 
         except Exception as e:
             logger.error(f"Error handling operation completion: {e}")
@@ -1360,7 +1380,7 @@ class MainWindow(QMainWindow):
         QMessageBox.about(
             self,
             "About Automation Studio Selector",
-            "Automation Studio Selector v1.4.0\n\n"
+            "Automation Studio Selector v1.5.0\n\n"
             "A professional tool for managing multiple Automation Studio installations\n"
             "and seamlessly switching between project configurations.\n\n"
             "Features:\n"

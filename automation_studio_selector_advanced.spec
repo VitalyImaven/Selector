@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Basic application info
 APP_NAME = 'AutomationStudioSelector'
-APP_VERSION = '1.4.0'
+APP_VERSION = '1.5.0'
 APP_AUTHOR = 'Vitaly Grosman - Indigo R&D Division'
 
 # Build options

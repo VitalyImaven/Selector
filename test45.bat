@@ -1,6 +1,6 @@
 @echo off
 REM Build script for AS45 project
-REM Version 1.4.0 - Enhanced with AS process checking and error reporting
+REM Version 1.5.0 - Enhanced with file lock retry and detection
 
 echo ========================================
 echo  Configuring AS45 Project
