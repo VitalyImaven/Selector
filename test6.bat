@@ -8,7 +8,7 @@ echo ========================================
 echo.
 
 REM Define the default/expected project path
-set "DEFAULT_PROJECT_PATH=C:\Work\Indigo\CrossPlatformAS\Br_MultiAS_OCB\OCB"
+REM "DEFAULT_PROJECT_PATH=C:\Work\Indigo\CrossPlatformAS\Br_MultiAS_OCB\OCB"
 REM To test auto-detection, comment out the line above with REM
 
 REM Check if DEFAULT_PROJECT_PATH is defined and exists
