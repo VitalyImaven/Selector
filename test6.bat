@@ -83,7 +83,7 @@ if "%ERRORLEVEL%"=="0" (
 )
 echo.
 
-python "C:\Work\Indigo\Python\Selector\Selector\main.py" ^
+"C:\Program Files\Automation Studio Selector\AutomationStudioSelector.exe" ^
   -project-path "%PROJECT_PATH%" ^
   -as-version 6 ^
   -prepare-only
