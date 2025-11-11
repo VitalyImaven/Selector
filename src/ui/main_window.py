@@ -62,6 +62,9 @@ class ProjectWorker(QThread):
             self.progress_updated.emit("Updating project file...")
             self.project_service.update_project_file(self.project_root, self.studio)
             
+            self.progress_updated.emit("Clearing build artifacts...")
+            self.project_service.clear_build_artifacts(self.project_root)
+            
             if self.launch_as:
                 self.progress_updated.emit("Opening Automation Studio...")
                 self.project_service.open_project_file(self.project_root, self.studio)

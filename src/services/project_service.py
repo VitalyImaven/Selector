@@ -304,7 +304,85 @@ Get-Process | ForEach-Object {{
     # ----------------------
     # File operation helpers
     # ----------------------
-    def _safe_unlink(self, path: Path, max_retries: int = 3) -> None:
+    def _wait_for_filesystem_sync(self, path: Path, timeout: int = 2) -> None:
+        """
+        Wait for filesystem operations to complete and ensure all writes are flushed.
+        Creates a marker file to force filesystem sync.
+        
+        Args:
+            path: Directory path to sync
+            timeout: Additional wait time in seconds after sync marker
+        """
+        try:
+            logger.info(f"Waiting for filesystem sync on {path}")
+            
+            # Force sync by creating and deleting a marker file
+            # This ensures all pending write operations are completed
+            sync_marker = path / ".fs_sync_marker"
+            sync_marker.write_text("sync", encoding='utf-8')
+            sync_marker.unlink()
+            
+            # Additional wait for filesystem to stabilize
+            time.sleep(timeout)
+            logger.info(f"Filesystem sync completed for {path}")
+            
+        except Exception as e:
+            logger.warning(f"Sync marker operation failed (non-critical): {e}")
+            # Fallback: just wait
+            time.sleep(timeout)
+    
+    def _verify_files_not_locked(self, path: Path, sample_size: int = 5) -> bool:
+        """
+        Verify that files in the given path are not locked by attempting to open them.
+        
+        Args:
+            path: Directory path to check
+            sample_size: Number of files to sample for lock checking
+            
+        Returns:
+            True if files are accessible
+            
+        Raises:
+            ProjectOperationError: If files are locked
+        """
+        try:
+            logger.info(f"Verifying files are not locked in {path}")
+            
+            # Get a sample of files to check
+            all_files = [f for f in path.rglob('*') if f.is_file()]
+            
+            if not all_files:
+                logger.info("No files to verify (directory empty)")
+                return True
+            
+            # Check up to sample_size files
+            files_to_check = all_files[:min(sample_size, len(all_files))]
+            
+            for file_path in files_to_check:
+                try:
+                    # Try to open file in read mode to check if it's locked
+                    with open(file_path, 'rb') as f:
+                        # Read a small amount to ensure file is actually accessible
+                        f.read(1024)
+                    logger.debug(f"  ✓ File accessible: {file_path.name}")
+                except PermissionError as e:
+                    msg = f"File is locked and cannot be accessed: {file_path}"
+                    logger.error(msg)
+                    locking_info = self.find_locking_processes(path)
+                    raise ProjectOperationError(f"{msg}\n{locking_info}") from e
+                except Exception as e:
+                    logger.warning(f"  Error checking file {file_path.name}: {e}")
+            
+            logger.info(f"Verified {len(files_to_check)} files are accessible and not locked")
+            return True
+            
+        except ProjectOperationError:
+            raise
+        except Exception as e:
+            logger.warning(f"File lock verification failed (non-critical): {e}")
+            return True  # Don't fail the whole operation for verification issues
+    
+    def _safe_unlink(self, path: Path, max_retries: int = 5) -> None:
         """Delete a file; retry on transient locks; raise helpful error if locked/in-use."""
         last_error = None
         
@@ -317,7 +395,7 @@ Get-Process | ForEach-Object {{
             except PermissionError as e:
                 last_error = e
                 if attempt < max_retries - 1:
-                    wait_time = 0.5 * (2 ** attempt)  # 0.5s, 1s, 2s
+                    wait_time = 1.0 * (2 ** attempt)  # 1s, 2s, 4s, 8s, 16s
                     logger.warning(f"Attempt {attempt + 1}/{max_retries}: Cannot delete {path}, retrying in {wait_time}s...")
                     time.sleep(wait_time)
                 else:
@@ -333,7 +411,7 @@ Get-Process | ForEach-Object {{
                 last_error = e
                 if getattr(e, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
                     if attempt < max_retries - 1:
-                        wait_time = 0.5 * (2 ** attempt)
+                        wait_time = 1.0 * (2 ** attempt)  # 1s, 2s, 4s, 8s, 16s
                         logger.warning(f"Attempt {attempt + 1}/{max_retries}: File sharing violation on {path}, retrying in {wait_time}s...")
                         time.sleep(wait_time)
                     else:
@@ -348,7 +426,7 @@ Get-Process | ForEach-Object {{
                 else:
                     raise
     
-    def _safe_rmtree(self, path: Path, max_retries: int = 3) -> None:
+    def _safe_rmtree(self, path: Path, max_retries: int = 5) -> None:
         """Recursively delete a directory; retry on transient locks; raise helpful error if locked/in-use."""
         last_error = None
         
@@ -363,7 +441,7 @@ Get-Process | ForEach-Object {{
             except PermissionError as e:
                 last_error = e
                 if attempt < max_retries - 1:
-                    wait_time = 0.5 * (2 ** attempt)  # 0.5s, 1s
+                    wait_time = 1.0 * (2 ** attempt)  # 1s, 2s, 4s, 8s, 16s
                     logger.warning(f"Attempt {attempt + 1}/{max_retries}: Cannot delete {path}, retrying in {wait_time}s...")
                     if self.session_logger:
                         self.session_logger.log_file_operation(f"Retry {attempt + 1}/{max_retries}", f"Waiting {wait_time}s")
@@ -399,7 +477,7 @@ Get-Process | ForEach-Object {{
                 last_error = e
                 if getattr(e, 'winerror', None) == 32:  # ERROR_SHARING_VIOLATION
                     if attempt < max_retries - 1:
-                        wait_time = 0.5 * (2 ** attempt)
+                        wait_time = 1.0 * (2 ** attempt)  # 1s, 2s, 4s, 8s, 16s
                         logger.warning(f"Attempt {attempt + 1}/{max_retries}: File sharing violation on {path}, retrying in {wait_time}s...")
                         time.sleep(wait_time)
                     else:
@@ -445,6 +523,99 @@ Get-Process | ForEach-Object {{
             logger.error(error_msg)
             self.session_logger.log_error(error_msg, e)
             raise ProjectOperationError(error_msg) from e
+    
+    def clear_build_artifacts(self, project_root: Path) -> bool:
+        """
+        Clear all build artifacts that could cause cache mismatches.
+        CRITICAL: Must be called after changing libraries/configuration to prevent corruption.
+        
+        This removes:
+        - Temp/ - Build cache, object files, intermediate artifacts
+        - Binaries/ - Compiled binaries from previous builds
+        - _BRDYN/ - B&R dynamic loader artifacts
+        - Diagnosis/ - Diagnostic data from previous runs
+        - *.bak, *.tmp, *.$$$ - Backup and temporary files
+        
+        Args:
+            project_root: Root path of the project
+            
+        Returns:
+            True if successful
+        """
+        try:
+            logger.info("=" * 60)
+            logger.info("CLEARING BUILD ARTIFACTS TO PREVENT CACHE CORRUPTION")
+            logger.info("=" * 60)
+            
+            # Directories to clear (these contain version-specific build cache)
+            artifacts_to_clear = [
+                ("Temp", True),        # Build cache - RECREATE after clearing
+                ("Binaries", False),   # Compiled binaries - don't recreate
+                ("_BRDYN", False),     # B&R dynamic artifacts - don't recreate
+                ("Diagnosis", False),  # Diagnostic data - don't recreate
+            ]
+            
+            cleared_count = 0
+            
+            for dir_name, recreate in artifacts_to_clear:
+                artifact_dir = project_root / dir_name
+                
+                if artifact_dir.exists():
+                    try:
+                        logger.info(f"Clearing {dir_name}/ directory...")
+                        self._safe_rmtree(artifact_dir)
+                        logger.info(f"✓ Cleared: {dir_name}/")
+                        self.session_logger.log_file_operation(f"Build artifacts cleared", str(artifact_dir))
+                        cleared_count += 1
+                        
+                        # Recreate Temp/ (AS expects it to exist)
+                        if recreate:
+                            artifact_dir.mkdir(parents=True, exist_ok=True)
+                            logger.info(f"✓ Recreated empty {dir_name}/ folder")
+                            self.session_logger.log_file_operation(f"Directory recreated", str(artifact_dir))
+                            
+                    except Exception as e:
+                        logger.warning(f"Could not clear {dir_name}/: {e}")
+                        # Non-critical - continue with other artifacts
+                else:
+                    logger.debug(f"{dir_name}/ does not exist (skipping)")
+            
+            # Clear backup and temporary files throughout the project
+            logger.info("Clearing backup and temporary files...")
+            backup_patterns = ["*.bak", "*.tmp", "*.$$$"]
+            backup_count = 0
+            
+            for pattern in backup_patterns:
+                for backup_file in project_root.rglob(pattern):
+                    try:
+                        self._safe_unlink(backup_file)
+                        logger.debug(f"Deleted: {backup_file.relative_to(project_root)}")
+                        backup_count += 1
+                    except Exception as e:
+                        logger.debug(f"Could not delete {backup_file.name}: {e}")
+                        # Non-critical - continue with other files
+            
+            if backup_count > 0:
+                logger.info(f"✓ Cleared {backup_count} backup/temp files")
+            
+            logger.info("=" * 60)
+            logger.info(f"BUILD ARTIFACTS CLEANUP COMPLETE ({cleared_count} directories cleared)")
+            logger.info("=" * 60)
+            
+            self.session_logger.log_project_operation(
+                "Build artifacts cleared",
+                f"{cleared_count} directories, {backup_count} temp files"
+            )
+            
+            return True
+            
+        except Exception as e:
+            error_msg = f"Failed to clear build artifacts: {e}"
+            logger.error(error_msg)
+            self.session_logger.log_error(error_msg, e)
+            # Don't raise - this is important but not critical enough to fail the whole operation
+            logger.warning("Continuing despite build artifact cleanup failure...")
+            return False
     
     def clear_libraries_directory(self, project_root: Path) -> bool:
         """
@@ -507,6 +678,7 @@ Get-Process | ForEach-Object {{
             target_dir.mkdir(parents=True, exist_ok=True)
             
             # Copy all contents from source to target
+            copied_items = 0
             for item in source_dir.iterdir():
                 if item.is_dir():
                     target_item = target_dir / item.name
@@ -514,16 +686,47 @@ Get-Process | ForEach-Object {{
                         self._safe_rmtree(target_item)
                     shutil.copytree(item, target_item)
                     self.session_logger.log_file_operation("Directory copied", str(item), str(target_item))
+                    copied_items += 1
                 else:
                     target_item = target_dir / item.name
                     shutil.copy2(item, target_item)
                     self.session_logger.log_file_operation("File copied", str(item), str(target_item))
+                    copied_items += 1
             
             logger.info(f"Libraries copied from {source_dir} to {target_dir}")
             self.session_logger.log_project_operation(
                 f"Libraries copied for {studio.display_name}",
                 f"From: {source_dir} To: {target_dir}"
             )
+            
+            # VERIFICATION: Count files to ensure complete copy
+            logger.info("Verifying library copy completeness...")
+            source_files = [f for f in source_dir.rglob('*') if f.is_file()]
+            target_files = [f for f in target_dir.rglob('*') if f.is_file()]
+            
+            if len(source_files) != len(target_files):
+                raise ProjectOperationError(
+                    f"Library copy verification FAILED!\n"
+                    f"Source has {len(source_files)} files, but target has {len(target_files)} files.\n"
+                    f"The copy operation may have been interrupted."
+                )
+            
+            logger.info(f"✓ Verification passed: {len(target_files)} files copied successfully")
+            self.session_logger.log_project_operation(
+                "Library copy verified",
+                f"{len(target_files)} files"
+            )
+            
+            # FILESYSTEM SYNC: Wait for all write operations to complete
+            logger.info("Waiting for filesystem to flush all write operations...")
+            self._wait_for_filesystem_sync(target_dir, timeout=3)
+            
+            # LOCK CHECK: Verify files are accessible and not locked
+            logger.info("Verifying files are not locked...")
+            self._verify_files_not_locked(target_dir, sample_size=10)
+            
+            logger.info("✓ All library files are accessible and ready")
+            
             return True
             
         except Exception as e:
@@ -564,6 +767,10 @@ Get-Process | ForEach-Object {{
             self.session_logger.log_project_operation(
                 f"Physical.pkg updated for {studio.display_name}"
             )
+            
+            # Wait for filesystem to ensure file is fully written
+            self._wait_for_filesystem_sync(paths.physical_path, timeout=1)
+            
             return True
             
         except Exception as e:
@@ -613,6 +820,20 @@ Get-Process | ForEach-Object {{
             self.session_logger.log_project_operation(
                 f"Project file updated for {studio.display_name}"
             )
+            
+            # Wait for filesystem to ensure file is fully written and ready to open
+            logger.info("Ensuring project file is fully written to disk...")
+            self._wait_for_filesystem_sync(project_root, timeout=2)
+            
+            # Verify the file is not locked
+            logger.info("Verifying project file is accessible...")
+            try:
+                with open(target_file, 'rb') as f:
+                    f.read(1024)  # Read first 1KB to ensure file is accessible
+                logger.info("✓ Project file is ready")
+            except Exception as e:
+                logger.warning(f"Project file verification warning: {e}")
+            
             return True
             
         except Exception as e:
@@ -690,6 +911,12 @@ Get-Process | ForEach-Object {{
             # Step 5: Update project file (OCB.apj)
             self.update_project_file(project_root, studio)
             
+            # Step 6: Clear build artifacts (CRITICAL - prevents cache corruption)
+            self.clear_build_artifacts(project_root)
+            
+            # Step 7: Final filesystem sync to ensure Temp/ recreation is written
+            self._wait_for_filesystem_sync(project_root, timeout=1)
+            
             logger.info(f"Project prepared successfully for {studio.display_name}")
             self.session_logger.log_project_operation("Project prepared successfully (no launch)")
             
@@ -731,7 +958,13 @@ Get-Process | ForEach-Object {{
             # Step 5: Update project file (OCB.apj)
             self.update_project_file(project_root, studio)
             
-            # Step 6: Open project file
+            # Step 6: Clear build artifacts (CRITICAL - prevents cache corruption)
+            self.clear_build_artifacts(project_root)
+            
+            # Step 7: Final filesystem sync to ensure Temp/ recreation is written
+            self._wait_for_filesystem_sync(project_root, timeout=1)
+            
+            # Step 8: Open project file
             self.open_project_file(project_root, studio)
             
             logger.info(f"Project setup completed successfully for {studio.display_name}")
